@@ -53,4 +53,27 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+    implementation("androidx.appcompat:appcompat:1.7.1")
+
+    //Fragment
+    implementation("androidx.fragment:fragment-ktx:1.8.9")
+    //Activity
+    implementation("androidx.activity:activity-ktx:1.12.2")
+    //ViewModel
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.10.0")
+    //LiveData
+    implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.10.0")
+
+    //Retrofit
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+    //Corrutinas
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.3.6")
+
+    //DataStore
+    implementation("androidx.datastore:datastore-preferences:1.2.0")
+
+    // Google Maps
+    implementation("com.google.android.gms:play-services-maps:17.0.0")
+    implementation("com.google.android.gms:play-services-location:21.3.0")
 }
