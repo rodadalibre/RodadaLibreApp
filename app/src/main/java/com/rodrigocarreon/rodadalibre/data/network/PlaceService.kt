@@ -1,10 +1,12 @@
 package com.rodrigocarreon.rodadalibre.data.network
 
+import com.rodrigocarreon.rodadalibre.core.RetrofitHelper
 import com.rodrigocarreon.rodadalibre.data.model.PlaceModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import javax.inject.Inject
 
-class PlaceService (
+class PlaceService @Inject constructor(
     private val api: PlaceClient
 ){
     suspend fun getPlaces(): List<PlaceModel>{

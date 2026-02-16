@@ -6,9 +6,12 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.rodrigocarreon.rodadalibre.domain.GetPlacesUseCase
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class PlacesViewModel (
+@HiltViewModel
+class PlacesViewModel @Inject constructor(
     private val getPlacesUseCase: GetPlacesUseCase
 ): ViewModel() {
     val isLoading = MutableLiveData<Boolean>()
