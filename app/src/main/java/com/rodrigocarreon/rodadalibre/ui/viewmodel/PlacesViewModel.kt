@@ -20,6 +20,7 @@ class PlacesViewModel @Inject constructor(
         viewModelScope.launch {
             isLoading.postValue(true)
             val result = getPlacesUseCase()
+            Log.d("PLACES", result.toString())
             isLoading.postValue(false)
         }
     }
