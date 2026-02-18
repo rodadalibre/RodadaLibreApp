@@ -90,4 +90,9 @@ dependencies {
     // Dagger Hilt
     implementation(libs.google.dagger.hilt)
     ksp(libs.google.dagger.hilt.compiler)
+
+    // Room
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+    ksp(libs.androidx.room.compiler)
 }
