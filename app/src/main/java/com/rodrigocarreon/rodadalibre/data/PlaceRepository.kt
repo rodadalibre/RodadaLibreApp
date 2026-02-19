@@ -12,6 +12,9 @@ class PlaceRepository @Inject constructor(
     private val service: PlaceService,
     private val placeDao: PlaceDao
 ) {
+    suspend fun getAllPlacesFromApi(): List<PlaceModel>{
+        return service.getPlaces()
+    }
     suspend fun getAllPlaces(): List<Place>{
         val places = placeDao.getAllPlaces()
         return places.map{ it.toDomain() }

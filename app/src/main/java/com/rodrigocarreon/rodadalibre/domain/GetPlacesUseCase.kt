@@ -9,9 +9,9 @@ class GetPlacesUseCase @Inject constructor(
     private val repository: PlaceRepository
 ){
     suspend operator fun invoke(): List<Place>{
-        repository.clearPlaces()
-        val apiPlaces = repository.getAllPlaces()
+        val apiPlaces = repository.getAllPlacesFromApi()
 
+        repository.clearPlaces()
         if(apiPlaces.isNotEmpty()){
             repository.insertPlaces(apiPlaces.map { it.toDatabase() })
         }

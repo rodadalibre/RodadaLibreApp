@@ -1,10 +1,11 @@
 package com.rodrigocarreon.rodadalibre.domain.model
 
 import com.rodrigocarreon.rodadalibre.data.database.entities.PlaceEntity
+import com.rodrigocarreon.rodadalibre.data.model.PlaceType
 
 data class Place (
     val id: Int,
-    val type: String,
+    val type: PlaceType,
     val name: String,
     val description: String?,
     val schedule: String?,
