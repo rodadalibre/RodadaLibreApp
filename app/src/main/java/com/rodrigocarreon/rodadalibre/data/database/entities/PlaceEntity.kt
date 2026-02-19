@@ -3,6 +3,7 @@ package com.rodrigocarreon.rodadalibre.data.database.entities
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.google.gson.annotations.SerializedName
+import com.rodrigocarreon.rodadalibre.domain.model.Place
 
 @Entity(tableName = "places_table")
 data class PlaceEntity (
@@ -17,4 +18,8 @@ data class PlaceEntity (
     @SerializedName("latitude") val latitude: Double,
     @SerializedName("longitude") val longitude: Double,
     @SerializedName("photos") val photos: List<String> = emptyList()
+)
+
+fun Place.toDatabase() = PlaceEntity(
+    id, type, name, description, schedule, cost, capacity, latitude, longitude, photos
 )
