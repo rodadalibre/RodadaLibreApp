@@ -15,6 +15,6 @@ data class PlaceEntity (
     @SerializedName("cost") val cost: Double?,
     @SerializedName("capacity") val capacity: Int?,
     @SerializedName("latitude") val latitude: Double,
-    @SerializedName("longitude") val longitude: Double
-
+    @SerializedName("longitude") val longitude: Double,
+    @SerializedName("photos") val photos: List<String> = emptyList()
 )
