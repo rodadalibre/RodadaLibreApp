@@ -20,4 +20,8 @@ class PlaceRepository @Inject constructor(
     suspend fun insertPlaces(places: List<PlaceEntity>){
         placeDao.insertAll(places)
     }
+
+    suspend fun clearPlaces(){
+        placeDao.deleteAllPlaces()
+    }
 }
