@@ -14,9 +14,9 @@ data class PlaceModel (
     @SerializedName("schedule")
     val schedule: String?,
     @SerializedName("cost")
-    val cost: Double,
+    val cost: Double?,
     @SerializedName("capacity")
-    val capacity: Int,
+    val capacity: Int?,
     @SerializedName("latitude")
     val latitude: Double,
     @SerializedName("longitude")
