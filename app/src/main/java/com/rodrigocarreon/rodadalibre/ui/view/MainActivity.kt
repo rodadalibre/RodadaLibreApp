@@ -30,6 +30,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
@@ -48,10 +49,16 @@ import kotlinx.coroutines.launch
 class MainActivity : ComponentActivity() {
     private val placesViewModel : PlacesViewModel by viewModels()
     override fun onCreate(savedInstanceState: Bundle?) {
+        val splashScreen = installSplashScreen()
+
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
         placesViewModel.loadPlaces()
+
+        splashScreen.setKeepOnScreenCondition {
+            placesViewModel.isLoading.value
+        }
 
         setContent {
             RodadaLibreAppScreen(viewModel = placesViewModel)

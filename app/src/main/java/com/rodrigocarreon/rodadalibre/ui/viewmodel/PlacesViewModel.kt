@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.lang.Thread.sleep
 import javax.inject.Inject
 
 @HiltViewModel
@@ -35,7 +36,6 @@ class PlacesViewModel @Inject constructor(
                 _networkMessage.value = errorMessage
             }
             _placesList.value = result
-            Log.d("PLACES", result.toString())
 
             _isLoading.value = false
         }
