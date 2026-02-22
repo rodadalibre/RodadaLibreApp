@@ -4,9 +4,6 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
 import com.rodrigocarreon.rodadalibre.ui.viewmodel.PlacesViewModel
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -18,13 +15,9 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         placesViewModel.loadPlaces()
-    }
-}
 
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
+        placesViewModel.networkMessage.observe(this) { message ->
+            android.widget.Toast.makeText(this, message, android.widget.Toast.LENGTH_LONG).show()
+        }
+    }
 }

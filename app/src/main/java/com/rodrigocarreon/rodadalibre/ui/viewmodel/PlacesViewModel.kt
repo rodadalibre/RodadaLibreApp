@@ -15,11 +15,15 @@ class PlacesViewModel @Inject constructor(
     private val getPlacesUseCase: GetPlacesUseCase
 ): ViewModel() {
     val isLoading = MutableLiveData<Boolean>()
+    val networkMessage = MutableLiveData<String>()
 
     fun loadPlaces(){
         viewModelScope.launch {
             isLoading.postValue(true)
-            val result = getPlacesUseCase()
+
+            val result = getPlacesUseCase{ errorMessage ->
+                networkMessage.postValue(errorMessage)
+            }
             Log.d("PLACES", result.toString())
             isLoading.postValue(false)
         }
