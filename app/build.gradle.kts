@@ -90,6 +90,8 @@ dependencies {
     implementation("com.google.android.gms:play-services-maps:17.0.0")
     implementation("com.google.android.gms:play-services-location:21.3.0")
 
+    implementation(libs.google.maps.compose)
+
     // Dagger Hilt
     implementation(libs.google.dagger.hilt)
     ksp(libs.google.dagger.hilt.compiler)

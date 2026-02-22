@@ -6,7 +6,11 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.rodrigocarreon.rodadalibre.domain.GetPlacesUseCase
+import com.rodrigocarreon.rodadalibre.domain.model.Place
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -14,18 +18,30 @@ import javax.inject.Inject
 class PlacesViewModel @Inject constructor(
     private val getPlacesUseCase: GetPlacesUseCase
 ): ViewModel() {
-    val isLoading = MutableLiveData<Boolean>()
-    val networkMessage = MutableLiveData<String>()
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+
+    private val _networkMessage = MutableStateFlow("")
+    val networkMessage: StateFlow<String> = _networkMessage.asStateFlow()
+
+    private val _placesList = MutableStateFlow<List<Place>>(emptyList())
+    val placesList: StateFlow<List<Place>> = _placesList.asStateFlow()
 
     fun loadPlaces(){
         viewModelScope.launch {
-            isLoading.postValue(true)
+            _isLoading.value = true
 
             val result = getPlacesUseCase{ errorMessage ->
-                networkMessage.postValue(errorMessage)
+                _networkMessage.value = errorMessage
             }
+            _placesList.value = result
             Log.d("PLACES", result.toString())
-            isLoading.postValue(false)
+
+            _isLoading.value = false
         }
+    }
+
+    fun clearNetworkMessage() {
+        _networkMessage.value = ""
     }
 }
