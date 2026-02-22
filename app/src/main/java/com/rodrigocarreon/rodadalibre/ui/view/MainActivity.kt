@@ -2,7 +2,9 @@ package com.rodrigocarreon.rodadalibre.ui.view
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.content.Context
 import android.content.pm.PackageManager
+import android.graphics.Canvas
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -14,7 +16,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
@@ -32,7 +33,8 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.google.android.gms.location.LocationServices
-import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.model.BitmapDescriptor
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.GoogleMap
@@ -44,6 +46,9 @@ import com.google.maps.android.compose.rememberCameraPositionState
 import com.rodrigocarreon.rodadalibre.ui.viewmodel.PlacesViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
+import androidx.core.graphics.createBitmap
+import com.rodrigocarreon.rodadalibre.R
+import com.rodrigocarreon.rodadalibre.data.model.PlaceType
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -143,10 +148,21 @@ fun RodadaLibreAppScreen(viewModel: PlacesViewModel) {
             uiSettings = MapUiSettings(myLocationButtonEnabled = hasLocationPermission)
         ) {
             places.forEach { place ->
+                val iconResId = when(place.type) {
+                    PlaceType.STATION -> R.drawable.ic_bikestation // Reemplaza con tus nombres reales
+                    PlaceType.WORKSHOP -> R.drawable.ic_workshop
+                    PlaceType.STORE -> R.drawable.ic_store
+                    PlaceType.RESTROOM -> R.drawable.ic_wc
+                    else -> R.drawable.ic_launcher_foreground // Icono por defecto si el tipo es nuevo
+                }
+
+                val mapIcon = bitmapDescriptorFromVector(context, iconResId)
+
                 Marker(
                     state = MarkerState(position = LatLng(place.latitude, place.longitude)),
                     title = place.name,
-                    snippet = place.description
+                    snippet = place.description,
+                    icon = mapIcon
                 )
             }
         }
@@ -164,4 +180,16 @@ fun RodadaLibreAppScreen(viewModel: PlacesViewModel) {
             androidx.compose.material3.Snackbar(snackbarData = data)
         }
     }
+}
+
+fun bitmapDescriptorFromVector(context: Context, vectorResId: Int): BitmapDescriptor? {
+    val vectorDrawable = ContextCompat.getDrawable(context, vectorResId) ?: return null
+
+    vectorDrawable.setBounds(0, 0, vectorDrawable.intrinsicWidth, vectorDrawable.intrinsicHeight)
+
+    val bitmap = createBitmap(vectorDrawable.intrinsicWidth, vectorDrawable.intrinsicHeight)
+    val canvas = Canvas(bitmap)
+    vectorDrawable.draw(canvas)
+
+    return BitmapDescriptorFactory.fromBitmap(bitmap)
 }
