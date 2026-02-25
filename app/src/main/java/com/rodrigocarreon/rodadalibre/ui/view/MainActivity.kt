@@ -125,7 +125,7 @@ fun RodadaLibreAppScreen(viewModel: PlacesViewModel) {
                 coroutineScope.launch {
                     cameraPositionState.position = CameraPosition.fromLatLngZoom(
                         LatLng(location.latitude, location.longitude),
-                        15.2f
+                        14.5f
                     )
                 }
             }
