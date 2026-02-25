@@ -70,6 +70,12 @@ import com.rodrigocarreon.rodadalibre.ui.viewmodel.PlacesViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
+private val icon_bikestation = R.drawable.ic_bikestation
+private val icon_workshop = R.drawable.ic_workshop
+private val icon_store = R.drawable.ic_store
+private val icon_wc = R.drawable.ic_wc
+private val icon_myLocation = R.drawable.ic_mylocation
+
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     private val placesViewModel : PlacesViewModel by viewModels()
@@ -180,10 +186,10 @@ fun RodadaLibreAppScreen(viewModel: PlacesViewModel) {
         ) {
             places.forEach { place ->
                 val iconResId = when(place.type) {
-                    PlaceType.STATION -> R.drawable.ic_bikestation
-                    PlaceType.WORKSHOP -> R.drawable.ic_workshop
-                    PlaceType.STORE -> R.drawable.ic_store
-                    PlaceType.RESTROOM -> R.drawable.ic_wc
+                    PlaceType.STATION -> icon_bikestation
+                    PlaceType.WORKSHOP -> icon_workshop
+                    PlaceType.STORE -> icon_store
+                    PlaceType.RESTROOM -> icon_wc
                     else -> R.drawable.ic_launcher_foreground
                 }
 
@@ -221,7 +227,7 @@ fun RodadaLibreAppScreen(viewModel: PlacesViewModel) {
                 contentColor = Color.White
             ) {
                 Icon(
-                    painter = painterResource(id = R.drawable.ic_mylocation),
+                    painter = painterResource(id = icon_myLocation),
                     contentDescription = "My Location"
                 )
             }
@@ -250,10 +256,10 @@ fun CategoryFilterMenu(
     onCategorySelected: (String) -> Unit
 ){
     val categories = listOf(
-        CategoryItem("STATION", "ESTACIONES", R.drawable.ic_bikestation),
-        CategoryItem("WORKSHOP", "AGENCIAS", R.drawable.ic_workshop),
-        CategoryItem("STORE", "TIENDAS", R.drawable.ic_store),
-        CategoryItem("RESTROOM", "BAÑOS", R.drawable.ic_wc)
+        CategoryItem("STATION", "ESTACIONES", icon_bikestation),
+        CategoryItem("WORKSHOP", "AGENCIAS", icon_workshop),
+        CategoryItem("STORE", "TIENDAS", icon_store),
+        CategoryItem("RESTROOM", "BAÑOS", icon_wc)
     )
 
     LazyRow(
