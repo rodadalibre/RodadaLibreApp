@@ -27,6 +27,7 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
@@ -208,6 +209,22 @@ fun RodadaLibreAppScreen(viewModel: PlacesViewModel) {
                     viewModel.selectedCategory(it)
                 }
             )
+        }
+
+        if(hasLocationPermission){
+            FloatingActionButton(
+                onClick = { centerCameraOnUser() },
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(end = 16.dp, bottom = 30.dp),
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = Color.White
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_mylocation),
+                    contentDescription = "My Location"
+                )
+            }
         }
 
         if (isLoading) {
