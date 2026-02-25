@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Canvas
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
@@ -16,24 +17,32 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -44,7 +53,9 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -52,6 +63,8 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.createBitmap
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.room.util.TableInfo
+import coil.compose.AsyncImage
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
@@ -64,12 +77,15 @@ import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
+import com.rodrigocarreon.rodadalibre.BuildConfig
 import com.rodrigocarreon.rodadalibre.R
 import com.rodrigocarreon.rodadalibre.data.model.PlaceType
+import com.rodrigocarreon.rodadalibre.domain.model.Place
 import com.rodrigocarreon.rodadalibre.ui.viewmodel.PlacesViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
+private val apiStorage = BuildConfig.API_BASE_URL + "storage/photos/"
 private val icon_bikestation = R.drawable.ic_bikestation
 private val icon_workshop = R.drawable.ic_workshop
 private val icon_store = R.drawable.ic_store
@@ -105,6 +121,9 @@ fun RodadaLibreAppScreen(viewModel: PlacesViewModel) {
 
     val places by viewModel.fileredPlaces.collectAsState()
     val selectedCategory by viewModel.selectedCategory.collectAsState()
+
+    var selectedPlace by remember { mutableStateOf<Place?>(null) }
+    var showBottomSheet by remember { mutableStateOf(false) }
 
     val isLoading by viewModel.isLoading.collectAsState()
     val networkMessage by viewModel.networkMessage.collectAsState()
@@ -199,7 +218,12 @@ fun RodadaLibreAppScreen(viewModel: PlacesViewModel) {
                     state = MarkerState(position = LatLng(place.latitude, place.longitude)),
                     title = place.name,
                     snippet = place.description,
-                    icon = mapIcon
+                    icon = mapIcon,
+                    onClick = {
+                        selectedPlace = place
+                        showBottomSheet = true
+                        true
+                    }
                 )
             }
         }
@@ -245,6 +269,16 @@ fun RodadaLibreAppScreen(viewModel: PlacesViewModel) {
         ) { data ->
             androidx.compose.material3.Snackbar(snackbarData = data)
         }
+    }
+    if (showBottomSheet && selectedPlace != null) {
+        PlaceBottomSheet(
+            place = selectedPlace!!,
+            isOnline = viewModel.isInternetAvailable(),
+            onDimiss = {
+                showBottomSheet = false
+                selectedPlace = null
+            }
+        )
     }
 }
 
@@ -296,6 +330,101 @@ fun CategoryFilterMenu(
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.Bold
                     )
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun PlaceBottomSheet(
+    place: Place,
+    isOnline: Boolean,
+    onDimiss: ()-> Unit
+){
+    ModalBottomSheet(
+        onDismissRequest = onDimiss,
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+        containerColor = Color.White
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp)
+                .padding(bottom = 32.dp)
+        ){
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ){
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)){
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        border = BorderStroke(1.dp, Color.LightGray),
+                        color = Color.White
+                    ){
+                        Text(
+                            text = place.name,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
+                        )
+                    }
+
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        border = BorderStroke(1.dp, Color.LightGray),
+                        color = Color.White
+                    ) {
+                        Text(
+                            text = place.description.toString(),
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
+                        )
+                    }
+
+                    Button(
+                        onClick = {/*TODO NAVIGATION TO GOOGLE MAPS MARKER*/},
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)),
+                        shape = RoundedCornerShape(16.dp),
+                        elevation = ButtonDefaults.buttonElevation(0.dp)
+                    ){
+                        Icon(
+                            painter = painterResource(id = icon_myLocation),
+                            contentDescription = "Como Llegar",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "¿Cómo llegar?",
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            if (isOnline && place.photos.isNotEmpty()) {
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                LazyRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(place.photos) { photoUrl ->
+                        AsyncImage(
+                            model = photoUrl,
+                            contentDescription = "Foto de ${place.name}",
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier
+                                .height(250.dp)
+                                .width(300.dp)
+                                .clip(RoundedCornerShape(16.dp))
+                        )
+                    }
                 }
             }
         }

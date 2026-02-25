@@ -2,6 +2,8 @@ package com.rodrigocarreon.rodadalibre.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.rodrigocarreon.rodadalibre.core.NetworkChecker
+import com.rodrigocarreon.rodadalibre.core.NetworkState
 import com.rodrigocarreon.rodadalibre.data.model.PlaceType
 import com.rodrigocarreon.rodadalibre.domain.GetPlacesUseCase
 import com.rodrigocarreon.rodadalibre.domain.model.Place
@@ -17,7 +19,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class PlacesViewModel @Inject constructor(
-    private val getPlacesUseCase: GetPlacesUseCase
+    private val getPlacesUseCase: GetPlacesUseCase,
+    private val networkChecker: NetworkChecker
 ): ViewModel() {
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
@@ -58,5 +61,9 @@ class PlacesViewModel @Inject constructor(
 
     fun clearNetworkMessage() {
         _networkMessage.value = ""
+    }
+
+    fun isInternetAvailable():  Boolean{
+        return networkChecker.getCurrentState() == NetworkState.ONLINE
     }
 }
