@@ -12,12 +12,27 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -28,28 +43,31 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.createBitmap
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.MapStyleOptions
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
+import com.rodrigocarreon.rodadalibre.R
+import com.rodrigocarreon.rodadalibre.data.model.PlaceType
 import com.rodrigocarreon.rodadalibre.ui.viewmodel.PlacesViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
-import androidx.core.graphics.createBitmap
-import com.google.android.gms.maps.model.MapStyleOptions
-import com.rodrigocarreon.rodadalibre.R
-import com.rodrigocarreon.rodadalibre.data.model.PlaceType
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -78,7 +96,9 @@ fun RodadaLibreAppScreen(viewModel: PlacesViewModel) {
 
     val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
 
-    val places by viewModel.placesList.collectAsState()
+    val places by viewModel.fileredPlaces.collectAsState()
+    val selectedCategory by viewModel.selectedCategory.collectAsState()
+
     val isLoading by viewModel.isLoading.collectAsState()
     val networkMessage by viewModel.networkMessage.collectAsState()
 
@@ -174,6 +194,19 @@ fun RodadaLibreAppScreen(viewModel: PlacesViewModel) {
             }
         }
 
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .padding(top = 30.dp)
+        ){
+            CategoryFilterMenu(
+                selectedCategory = selectedCategory,
+                onCategorySelected = {
+                    viewModel.selectedCategory(it)
+                }
+            )
+        }
+
         if (isLoading) {
             CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
         }
@@ -185,6 +218,60 @@ fun RodadaLibreAppScreen(viewModel: PlacesViewModel) {
                 .padding(top = 48.dp)
         ) { data ->
             androidx.compose.material3.Snackbar(snackbarData = data)
+        }
+    }
+}
+
+data class CategoryItem(val id: String, val title: String, val icon: Int)
+
+@Composable
+fun CategoryFilterMenu(
+    selectedCategory: String,
+    onCategorySelected: (String) -> Unit
+){
+    val categories = listOf(
+        CategoryItem("STATION", "ESTACIONES", R.drawable.ic_bikestation),
+        CategoryItem("WORKSHOP", "AGENCIAS", R.drawable.ic_workshop),
+        CategoryItem("STORE", "TIENDAS", R.drawable.ic_store),
+        CategoryItem("RESTROOM", "BAÑOS", R.drawable.ic_wc)
+    )
+
+    LazyRow(
+        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 10.dp),
+        horizontalArrangement = Arrangement.spacedBy(5.dp)
+    ) {
+        items(categories){ category ->
+            val isSelected = selectedCategory == category.id
+
+            val mainColor = MaterialTheme.colorScheme.primary
+
+            Surface(
+                modifier = Modifier.clickable{onCategorySelected(category.id)},
+                shape = RoundedCornerShape(8.dp),
+                border = BorderStroke(1.dp, mainColor),
+                color = if (isSelected) mainColor else Color.White
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        painter = painterResource(category.icon),
+                        contentDescription = category.title,
+                        tint = if (isSelected) Color.White else mainColor,
+                        modifier = Modifier.size(18.dp)
+                    )
+
+                    Spacer(modifier = Modifier.width(6.dp))
+
+                    Text(
+                        text = category.title,
+                        color = if (isSelected) Color.White else mainColor,
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
         }
     }
 }

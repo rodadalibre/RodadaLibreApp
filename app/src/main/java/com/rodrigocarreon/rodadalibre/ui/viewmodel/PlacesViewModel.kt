@@ -1,18 +1,18 @@
 package com.rodrigocarreon.rodadalibre.ui.viewmodel
 
-import android.text.BoringLayout
-import android.util.Log
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.rodrigocarreon.rodadalibre.data.model.PlaceType
 import com.rodrigocarreon.rodadalibre.domain.GetPlacesUseCase
 import com.rodrigocarreon.rodadalibre.domain.model.Place
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import java.lang.Thread.sleep
 import javax.inject.Inject
 
 @HiltViewModel
@@ -26,7 +26,18 @@ class PlacesViewModel @Inject constructor(
     val networkMessage: StateFlow<String> = _networkMessage.asStateFlow()
 
     private val _placesList = MutableStateFlow<List<Place>>(emptyList())
+
+    private val _selectedCategory = MutableStateFlow("all")
+    val selectedCategory: StateFlow<String> = _selectedCategory.asStateFlow()
     val placesList: StateFlow<List<Place>> = _placesList.asStateFlow()
+
+    val fileredPlaces: StateFlow<List<Place>> = combine(_placesList, _selectedCategory){ places, category ->
+        if(category == "all"){
+            places
+        }else{
+            places.filter { it.type == PlaceType.valueOf(category) }
+        }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     fun loadPlaces(){
         viewModelScope.launch {
@@ -39,6 +50,10 @@ class PlacesViewModel @Inject constructor(
 
             _isLoading.value = false
         }
+    }
+
+    fun selectedCategory(category: String){
+        _selectedCategory.value = category
     }
 
     fun clearNetworkMessage() {
