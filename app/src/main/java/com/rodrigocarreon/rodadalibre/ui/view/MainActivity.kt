@@ -47,6 +47,7 @@ import com.rodrigocarreon.rodadalibre.ui.viewmodel.PlacesViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import androidx.core.graphics.createBitmap
+import com.google.android.gms.maps.model.MapStyleOptions
 import com.rodrigocarreon.rodadalibre.R
 import com.rodrigocarreon.rodadalibre.data.model.PlaceType
 
@@ -144,16 +145,22 @@ fun RodadaLibreAppScreen(viewModel: PlacesViewModel) {
         GoogleMap(
             modifier = Modifier.fillMaxSize(),
             cameraPositionState = cameraPositionState,
-            properties = MapProperties(isMyLocationEnabled = hasLocationPermission),
-            uiSettings = MapUiSettings(myLocationButtonEnabled = hasLocationPermission)
+            properties = MapProperties(
+                isMyLocationEnabled = hasLocationPermission,
+                mapStyleOptions = MapStyleOptions.loadRawResourceStyle(context, R.raw.map_style)
+            ),
+            uiSettings = MapUiSettings(
+                myLocationButtonEnabled = hasLocationPermission,
+                zoomControlsEnabled = false
+            )
         ) {
             places.forEach { place ->
                 val iconResId = when(place.type) {
-                    PlaceType.STATION -> R.drawable.ic_bikestation // Reemplaza con tus nombres reales
+                    PlaceType.STATION -> R.drawable.ic_bikestation
                     PlaceType.WORKSHOP -> R.drawable.ic_workshop
                     PlaceType.STORE -> R.drawable.ic_store
                     PlaceType.RESTROOM -> R.drawable.ic_wc
-                    else -> R.drawable.ic_launcher_foreground // Icono por defecto si el tipo es nuevo
+                    else -> R.drawable.ic_launcher_foreground
                 }
 
                 val mapIcon = bitmapDescriptorFromVector(context, iconResId)
