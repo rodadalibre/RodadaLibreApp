@@ -170,7 +170,10 @@ fun RodadaLibreAppScreen(viewModel: PlacesViewModel) {
                 mapStyleOptions = MapStyleOptions.loadRawResourceStyle(context, R.raw.map_style)
             ),
             uiSettings = MapUiSettings(
-                myLocationButtonEnabled = hasLocationPermission,
+                compassEnabled = false,
+                indoorLevelPickerEnabled = false,
+                mapToolbarEnabled = false,
+                myLocationButtonEnabled = false,
                 zoomControlsEnabled = false
             )
         ) {
@@ -215,7 +218,7 @@ fun RodadaLibreAppScreen(viewModel: PlacesViewModel) {
             hostState = snackbarHostState,
             modifier = Modifier
                 .align(Alignment.TopCenter)
-                .padding(top = 48.dp)
+                .padding(top = 70.dp)
         ) { data ->
             androidx.compose.material3.Snackbar(snackbarData = data)
         }
@@ -237,7 +240,7 @@ fun CategoryFilterMenu(
     )
 
     LazyRow(
-        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 10.dp),
+        contentPadding = PaddingValues(horizontal = 6.dp, vertical = 10.dp),
         horizontalArrangement = Arrangement.spacedBy(5.dp)
     ) {
         items(categories){ category ->
