@@ -3,10 +3,10 @@ package com.rodrigocarreon.rodadalibre.ui.view
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Canvas
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
@@ -62,8 +62,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.createBitmap
+import androidx.core.net.toUri
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
-import androidx.room.util.TableInfo
 import coil.compose.AsyncImage
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.model.BitmapDescriptor
@@ -77,7 +77,6 @@ import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
-import com.rodrigocarreon.rodadalibre.BuildConfig
 import com.rodrigocarreon.rodadalibre.R
 import com.rodrigocarreon.rodadalibre.data.model.PlaceType
 import com.rodrigocarreon.rodadalibre.domain.model.Place
@@ -85,7 +84,6 @@ import com.rodrigocarreon.rodadalibre.ui.viewmodel.PlacesViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
-private val apiStorage = BuildConfig.API_BASE_URL + "storage/photos/"
 private val icon_bikestation = R.drawable.ic_bikestation
 private val icon_workshop = R.drawable.ic_workshop
 private val icon_store = R.drawable.ic_store
@@ -343,6 +341,7 @@ fun PlaceBottomSheet(
     isOnline: Boolean,
     onDimiss: ()-> Unit
 ){
+    val context = LocalContext.current
     ModalBottomSheet(
         onDismissRequest = onDimiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
@@ -383,23 +382,39 @@ fun PlaceBottomSheet(
                         )
                     }
 
-                    Button(
-                        onClick = {/*TODO NAVIGATION TO GOOGLE MAPS MARKER*/},
-                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)),
-                        shape = RoundedCornerShape(16.dp),
-                        elevation = ButtonDefaults.buttonElevation(0.dp)
-                    ){
-                        Icon(
-                            painter = painterResource(id = icon_myLocation),
-                            contentDescription = "Como Llegar",
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = "¿Cómo llegar?",
-                            color = MaterialTheme.colorScheme.primary,
-                            fontWeight = FontWeight.Bold
-                        )
+                    if(isOnline){
+                        Button(
+                            onClick = {
+                                val uri =
+                                    "https://www.google.com/maps/dir/?api=1&destination=${place.latitude},${place.longitude}".toUri()
+
+                                val mapIntent = Intent(Intent.ACTION_VIEW, uri)
+                                mapIntent.setPackage("com.google.android.apps.maps")
+
+                                try{
+                                    context.startActivity(mapIntent)
+                                }catch (e: Exception){
+                                    // If maps app not work use web maps
+                                    val webIntent = Intent(Intent.ACTION_VIEW, uri)
+                                    context.startActivity(webIntent)
+                                }
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)),
+                            shape = RoundedCornerShape(16.dp),
+                            elevation = ButtonDefaults.buttonElevation(0.dp)
+                        ){
+                            Icon(
+                                painter = painterResource(id = icon_myLocation),
+                                contentDescription = "Como Llegar",
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = "¿Cómo llegar?",
+                                color = MaterialTheme.colorScheme.primary,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
                     }
                 }
             }
