@@ -17,15 +17,25 @@ class NetworkChecker @Inject constructor(
 ) {
     fun getCurrentState(): NetworkState {
         val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+
         val network = connectivityManager.activeNetwork ?: return NetworkState.OFFLINE
+        val capabilities = connectivityManager.getNetworkCapabilities(network) ?: return NetworkState.OFFLINE
 
-        val capabilities = connectivityManager.getNetworkCapabilities(network) ?: return NetworkState.NO_INTERNET
+        val isWifi = capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)
+        val isCellular = capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)
+        val isEthernet = capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)
 
-        if (capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) &&
-            capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)) {
-            return NetworkState.ONLINE
+        if (!isWifi && !isCellular && !isEthernet) {
+            return NetworkState.OFFLINE
         }
 
-        return NetworkState.NO_INTERNET
+        val hasInternet = capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+        val isValidated = capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
+
+        return if (hasInternet && isValidated) {
+            NetworkState.ONLINE
+        } else {
+            NetworkState.NO_INTERNET
+        }
     }
 }
