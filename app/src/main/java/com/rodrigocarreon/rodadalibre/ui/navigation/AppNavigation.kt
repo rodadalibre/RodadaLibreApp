@@ -83,6 +83,11 @@ fun AppNavigation(viewModel: PlacesViewModel){
         NavHost(
             navController = navController,
             startDestination = BottomNavItem.Map.route,
+
+            enterTransition = { EnterTransition.None },
+            exitTransition = { ExitTransition.None },
+            popEnterTransition = { EnterTransition.None },
+            popExitTransition = { ExitTransition.None }
         ) {
             composable(BottomNavItem.Map.route) {
                 MapScreen(viewModel = viewModel, modifier = Modifier.padding(paddingValues))
