@@ -6,7 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
-import com.rodrigocarreon.rodadalibre.ui.screens.RodadaLibreAppScreen
+import com.rodrigocarreon.rodadalibre.ui.navigation.AppNavigation
 import com.rodrigocarreon.rodadalibre.ui.viewmodel.PlacesViewModel
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -26,7 +26,7 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
-            RodadaLibreAppScreen(viewModel = placesViewModel)
+            AppNavigation(viewModel = placesViewModel)
         }
     }
 }

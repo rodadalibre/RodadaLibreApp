@@ -56,7 +56,7 @@ import com.rodrigocarreon.rodadalibre.ui.components.CategoryFilterMenu
 import com.rodrigocarreon.rodadalibre.ui.components.PlaceBottomSheet
 
 @Composable
-fun RodadaLibreAppScreen(viewModel: PlacesViewModel) {
+fun MapScreen(viewModel: PlacesViewModel, modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope() // Camera animation
 
@@ -189,7 +189,7 @@ fun RodadaLibreAppScreen(viewModel: PlacesViewModel) {
                 onClick = { centerCameraOnUser() },
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
-                    .padding(end = 16.dp, bottom = 30.dp),
+                    .padding(end = 16.dp, bottom = 100.dp),
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = Color.White
             ) {
