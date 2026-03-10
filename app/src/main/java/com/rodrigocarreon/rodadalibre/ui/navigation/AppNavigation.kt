@@ -1,5 +1,7 @@
 package com.rodrigocarreon.rodadalibre.ui.navigation
 
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import com.rodrigocarreon.rodadalibre.R
@@ -16,6 +18,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.rodrigocarreon.rodadalibre.ui.screens.MapScreen
+import com.rodrigocarreon.rodadalibre.ui.screens.ProfileScreen
 import com.rodrigocarreon.rodadalibre.ui.viewmodel.PlacesViewModel
 
 val ic_map = R.drawable.ic_map
@@ -82,6 +85,9 @@ fun AppNavigation(viewModel: PlacesViewModel){
         ) {
             composable(BottomNavItem.Map.route) {
                 MapScreen(viewModel = viewModel, modifier = Modifier.padding(paddingValues))
+            }
+            composable(BottomNavItem.Account.route){
+                ProfileScreen()
             }
         }
     }
