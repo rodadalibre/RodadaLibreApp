@@ -19,6 +19,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.rodrigocarreon.rodadalibre.ui.screens.MapScreen
 import com.rodrigocarreon.rodadalibre.ui.screens.ProfileScreen
+import com.rodrigocarreon.rodadalibre.ui.screens.SearchStationsScreen
 import com.rodrigocarreon.rodadalibre.ui.viewmodel.PlacesViewModel
 
 val ic_map = R.drawable.ic_map
@@ -85,6 +86,9 @@ fun AppNavigation(viewModel: PlacesViewModel){
         ) {
             composable(BottomNavItem.Map.route) {
                 MapScreen(viewModel = viewModel, modifier = Modifier.padding(paddingValues))
+            }
+            composable(BottomNavItem.Search.route){
+                SearchStationsScreen()
             }
             composable(BottomNavItem.Account.route){
                 ProfileScreen()
