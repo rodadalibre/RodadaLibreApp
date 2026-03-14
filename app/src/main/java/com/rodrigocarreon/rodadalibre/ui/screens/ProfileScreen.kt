@@ -16,7 +16,7 @@ import com.rodrigocarreon.rodadalibre.R
 @Composable
 fun ProfileScreen() {
     Column(
-        modifier = Modifier.fillMaxSize().padding(24.dp),
+        modifier = Modifier.fillMaxSize().padding(10.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {

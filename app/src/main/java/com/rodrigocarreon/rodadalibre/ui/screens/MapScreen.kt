@@ -130,7 +130,7 @@ fun MapScreen(viewModel: PlacesViewModel, modifier: Modifier = Modifier) {
         }
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    Box(modifier = modifier.fillMaxSize()) {
         GoogleMap(
             modifier = Modifier.fillMaxSize(),
             cameraPositionState = cameraPositionState,
@@ -174,7 +174,7 @@ fun MapScreen(viewModel: PlacesViewModel, modifier: Modifier = Modifier) {
         Box(
             modifier = Modifier
                 .align(Alignment.TopCenter)
-                .padding(top = 30.dp)
+                .padding(top = 2.dp)
         ){
             CategoryFilterMenu(
                 selectedCategory = selectedCategory,
@@ -189,7 +189,7 @@ fun MapScreen(viewModel: PlacesViewModel, modifier: Modifier = Modifier) {
                 onClick = { centerCameraOnUser() },
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
-                    .padding(end = 16.dp, bottom = 100.dp),
+                    .padding(end = 16.dp, bottom = 32.dp),
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = Color.White
             ) {

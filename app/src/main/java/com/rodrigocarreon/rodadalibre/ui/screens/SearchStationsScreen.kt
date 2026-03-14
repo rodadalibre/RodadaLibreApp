@@ -21,7 +21,7 @@ fun SearchStationsScreen() {
             text = "Estaciones",
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(bottom = 16.dp, top = 32.dp)
+            modifier = Modifier.padding(bottom = 16.dp, top = 10.dp)
         )
         OutlinedTextField(
             value = searchQuery,

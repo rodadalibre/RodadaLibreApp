@@ -2,6 +2,8 @@ package com.rodrigocarreon.rodadalibre.ui.navigation
 
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import com.rodrigocarreon.rodadalibre.R
@@ -80,23 +82,42 @@ fun AppNavigation(viewModel: PlacesViewModel){
             }
         }
     ){ paddingValues ->
-        NavHost(
-            navController = navController,
-            startDestination = BottomNavItem.Map.route,
-
-            enterTransition = { EnterTransition.None },
-            exitTransition = { ExitTransition.None },
-            popEnterTransition = { EnterTransition.None },
-            popExitTransition = { ExitTransition.None }
+        Box(
+            modifier = Modifier
+                .padding(paddingValues)
+                .fillMaxSize()
         ) {
-            composable(BottomNavItem.Map.route) {
-                MapScreen(viewModel = viewModel, modifier = Modifier.padding(paddingValues))
-            }
-            composable(BottomNavItem.Search.route){
-                SearchStationsScreen()
-            }
-            composable(BottomNavItem.Account.route){
-                ProfileScreen()
+            MapScreen(viewModel = viewModel, modifier = Modifier.fillMaxSize())
+
+            NavHost(
+                navController = navController,
+                startDestination = BottomNavItem.Map.route,
+                enterTransition = { EnterTransition.None },
+                exitTransition = { ExitTransition.None },
+                popEnterTransition = { EnterTransition.None },
+                popExitTransition = { ExitTransition.None }
+            ) {
+                composable(BottomNavItem.Map.route) {
+                    Box(modifier = Modifier.fillMaxSize())
+                }
+
+                composable(BottomNavItem.Search.route) {
+                    Surface(
+                        modifier = Modifier.fillMaxSize(),
+                        color = colorScheme.background
+                    ) {
+                        SearchStationsScreen()
+                    }
+                }
+
+                composable(BottomNavItem.Account.route) {
+                    Surface(
+                        modifier = Modifier.fillMaxSize(),
+                        color = colorScheme.background
+                    ) {
+                        ProfileScreen()
+                    }
+                }
             }
         }
     }
