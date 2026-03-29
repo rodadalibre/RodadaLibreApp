@@ -19,6 +19,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.rodrigocarreon.rodadalibre.ui.screens.AuthScreen
 import com.rodrigocarreon.rodadalibre.ui.screens.MapScreen
 import com.rodrigocarreon.rodadalibre.ui.screens.ProfileScreen
 import com.rodrigocarreon.rodadalibre.ui.screens.SearchStationsScreen
@@ -115,7 +116,24 @@ fun AppNavigation(viewModel: PlacesViewModel){
                         modifier = Modifier.fillMaxSize(),
                         color = colorScheme.background
                     ) {
-                        ProfileScreen()
+                        ProfileScreen(
+                            onNavigateToAuth = {
+                                navController.navigate("auth_screen")
+                            }
+                        )
+                    }
+                }
+
+                composable("auth_screen") {
+                    Surface(
+                        modifier = Modifier.fillMaxSize(),
+                        color = MaterialTheme.colorScheme.background
+                    ) {
+                        AuthScreen(
+                            onNavigateBack = {
+                                navController.popBackStack()
+                            }
+                        )
                     }
                 }
             }

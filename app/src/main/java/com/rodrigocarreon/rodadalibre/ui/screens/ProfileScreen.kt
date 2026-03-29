@@ -14,7 +14,9 @@ import androidx.compose.ui.unit.dp
 import com.rodrigocarreon.rodadalibre.R
 
 @Composable
-fun ProfileScreen() {
+fun ProfileScreen(
+    onNavigateToAuth: () -> Unit
+) {
     Column(
         modifier = Modifier.fillMaxSize().padding(10.dp),
         verticalArrangement = Arrangement.Center,
@@ -42,7 +44,7 @@ fun ProfileScreen() {
         )
         Spacer(modifier = Modifier.height(32.dp))
         Button(
-            onClick = { /* TODO: Navegar a Login/Registro */ },
+            onClick = onNavigateToAuth,
             modifier = Modifier.fillMaxWidth().height(50.dp),
             shape = RoundedCornerShape(12.dp)
         ) {
