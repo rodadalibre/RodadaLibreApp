@@ -25,7 +25,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -60,6 +62,13 @@ fun AuthScreen(
             contentDescription = "Perfil vacío",
             modifier = Modifier.size(80.dp),
             tint = Color.Gray
+        )
+        Spacer(modifier = Modifier.height(24.dp))
+        Text(
+            text = "Inicia Sesión",
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center
         )
         Spacer(modifier = Modifier.height(24.dp))
         OutlinedTextField(

@@ -2,7 +2,9 @@ package com.rodrigocarreon.rodadalibre.data
 
 import com.rodrigocarreon.rodadalibre.data.local.TokenDataStore
 import com.rodrigocarreon.rodadalibre.data.model.LoginRequest
+import com.rodrigocarreon.rodadalibre.data.model.User
 import com.rodrigocarreon.rodadalibre.data.network.AuthApiClient
+import kotlinx.coroutines.flow.firstOrNull
 import javax.inject.Inject
 
 class AuthRepository @Inject constructor(
@@ -24,5 +26,26 @@ class AuthRepository @Inject constructor(
         }catch (e: Exception){
             return false
         }
+    }
+
+    suspend fun getUserProfile(): User?{
+        try{
+            val token = tokenDataStore.getToken().firstOrNull()
+
+            if (token.isNullOrEmpty()) return null
+
+            val response = api.getUserProfile("Bearer $token")
+            if(response.isSuccessful){
+                return response.body()
+            }
+
+            return null
+        } catch (e: Exception){
+            return null
+        }
+    }
+
+    suspend fun logout(){
+        tokenDataStore.clearToken()
     }
 }
