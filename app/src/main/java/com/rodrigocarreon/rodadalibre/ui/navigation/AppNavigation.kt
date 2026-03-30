@@ -107,7 +107,7 @@ fun AppNavigation(viewModel: PlacesViewModel){
                         modifier = Modifier.fillMaxSize(),
                         color = colorScheme.background
                     ) {
-                        SearchStationsScreen()
+                        SearchStationsScreen(viewModel = viewModel)
                     }
                 }
 
