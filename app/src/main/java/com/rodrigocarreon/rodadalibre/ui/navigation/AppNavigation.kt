@@ -107,7 +107,16 @@ fun AppNavigation(viewModel: PlacesViewModel){
                         modifier = Modifier.fillMaxSize(),
                         color = colorScheme.background
                     ) {
-                        SearchStationsScreen(viewModel = viewModel)
+                        SearchStationsScreen(
+                            viewModel = viewModel,
+                            onStationClick = {
+                                navController.navigate(BottomNavItem.Map.route){
+                                    popUpTo(BottomNavItem.Map.route) { saveState = true}
+                                    launchSingleTop = true
+                                    restoreState = true
+                                }
+                            }
+                        )
                     }
                 }
 

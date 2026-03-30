@@ -30,6 +30,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import com.google.android.gms.location.LocationServices
+import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MapStyleOptions
@@ -78,6 +79,8 @@ fun MapScreen(viewModel: PlacesViewModel, modifier: Modifier = Modifier) {
         position = CameraPosition.fromLatLngZoom(LatLng(21.8818, -102.2915), 13f)
     }
 
+    val focusedPlace by viewModel.focusedPlace.collectAsState()
+
     var hasLocationPermission by remember { mutableStateOf(false) }
 
     @SuppressLint("MissingPermission")
@@ -105,6 +108,25 @@ fun MapScreen(viewModel: PlacesViewModel, modifier: Modifier = Modifier) {
             }
         }
     )
+
+    LaunchedEffect(focusedPlace) {
+        focusedPlace?.let { place ->
+            coroutineScope.launch {
+                cameraPositionState.animate(
+                    update = CameraUpdateFactory.newLatLngZoom(
+                        LatLng(place.latitude, place.longitude),
+                        16f
+                    ),
+                    durationMs = 600
+                )
+
+                selectedPlace = place
+                showBottomSheet = true
+
+                viewModel.clearFocusPlace()
+            }
+        }
+    }
 
     LaunchedEffect(Unit) {
         val fineLocation = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED

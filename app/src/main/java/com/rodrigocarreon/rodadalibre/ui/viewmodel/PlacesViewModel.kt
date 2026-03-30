@@ -31,6 +31,10 @@ class PlacesViewModel @Inject constructor(
     private val _placesList = MutableStateFlow<List<Place>>(emptyList())
 
     private val _selectedCategory = MutableStateFlow("all")
+
+    private val _focusedPlace = MutableStateFlow<Place?>(null)
+    val focusedPlace: StateFlow<Place?> = _focusedPlace.asStateFlow()
+
     val selectedCategory: StateFlow<String> = _selectedCategory.asStateFlow()
     val placesList: StateFlow<List<Place>> = _placesList.asStateFlow()
 
@@ -65,5 +69,13 @@ class PlacesViewModel @Inject constructor(
 
     fun isInternetAvailable():  Boolean{
         return networkChecker.getCurrentState() == NetworkState.ONLINE
+    }
+
+    fun focusOnPlace(place: Place){
+        _focusedPlace.value = place
+    }
+
+    fun clearFocusPlace(){
+        _focusedPlace.value = null
     }
 }

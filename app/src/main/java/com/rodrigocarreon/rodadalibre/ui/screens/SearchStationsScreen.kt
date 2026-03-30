@@ -1,5 +1,6 @@
 package com.rodrigocarreon.rodadalibre.ui.screens
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -22,7 +23,8 @@ import com.rodrigocarreon.rodadalibre.ui.viewmodel.PlacesViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SearchStationsScreen(
-    viewModel: PlacesViewModel
+    viewModel: PlacesViewModel,
+    onStationClick: () -> Unit
 ) {
     var searchQuery by rememberSaveable { mutableStateOf("") }
 
@@ -81,7 +83,13 @@ fun SearchStationsScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 items(filteredStations) { station ->
-                    StationItemCard(station = station)
+                    StationItemCard(
+                        station = station,
+                        onClick = {
+                            viewModel.focusOnPlace(station)
+                            onStationClick()
+                        }
+                    )
                 }
             }
         }
@@ -89,9 +97,11 @@ fun SearchStationsScreen(
 }
 
 @Composable
-fun StationItemCard(station: Place) {
+fun StationItemCard(station: Place, onClick: () -> Unit) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().clickable{
+            onClick()
+        },
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
