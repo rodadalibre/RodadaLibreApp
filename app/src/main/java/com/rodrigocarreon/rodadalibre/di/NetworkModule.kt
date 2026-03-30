@@ -2,6 +2,7 @@ package com.rodrigocarreon.rodadalibre.di
 
 import androidx.compose.ui.tooling.preview.Preview
 import com.rodrigocarreon.rodadalibre.BuildConfig
+import com.rodrigocarreon.rodadalibre.data.network.AuthApiClient
 import com.rodrigocarreon.rodadalibre.data.network.PlaceClient
 import dagger.Module
 import dagger.Provides
@@ -28,5 +29,11 @@ object NetworkModule {
     @Provides
     fun providePlaceClient(retrofit: Retrofit): PlaceClient{
         return retrofit.create(PlaceClient::class.java)
+    }
+
+    @Singleton
+    @Provides
+    fun provideAuthApiClient(retrofit: Retrofit): AuthApiClient{
+        return retrofit.create(AuthApiClient::class.java)
     }
 }

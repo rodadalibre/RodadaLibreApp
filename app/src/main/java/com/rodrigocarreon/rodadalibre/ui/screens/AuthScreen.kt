@@ -9,10 +9,14 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -24,14 +28,27 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.rodrigocarreon.rodadalibre.R
+import com.rodrigocarreon.rodadalibre.ui.viewmodel.LoginState
+import com.rodrigocarreon.rodadalibre.ui.viewmodel.LoginViewModel
 
 @Composable
 fun AuthScreen(
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    viewModel: LoginViewModel = hiltViewModel()
 ){
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+
+    val loginState by viewModel.loginState.collectAsState()
+
+    LaunchedEffect(loginState) {
+        if (loginState is LoginState.Success){
+            viewModel.resetState()
+            onNavigateBack()
+        }
+    }
 
     Column(
         modifier = Modifier.fillMaxSize().padding(10.dp),
@@ -64,14 +81,26 @@ fun AuthScreen(
                 .padding(bottom = 16.dp),
             singleLine = true
         )
-        Button(
-            onClick = {
-                // AuthLogic
-                onNavigateBack()
-            },
-            modifier = Modifier.fillMaxWidth().height(50.dp)
-        )  {
-            Text(text = "Entrar", fontSize = 16.sp)
+
+        if (loginState is LoginState.Error) {
+            Text(
+                text = (loginState as LoginState.Error).message,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.padding(bottom = 16.dp)
+            )
+        }
+
+        if (loginState is LoginState.Loading) {
+            CircularProgressIndicator(modifier = Modifier.padding(top = 16.dp))
+        } else {
+            Button(
+                onClick = {
+                    viewModel.login(email, password)
+                },
+                modifier = Modifier.fillMaxWidth().height(50.dp)
+            ) {
+                Text(text = "Iniciar Sesión", fontSize = 16.sp)
+            }
         }
     }
 }
