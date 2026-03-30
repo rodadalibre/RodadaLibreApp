@@ -28,7 +28,7 @@ fun SearchStationsScreen(
 ) {
     var searchQuery by rememberSaveable { mutableStateOf("") }
 
-    val places by viewModel.fileredPlaces.collectAsState()
+    val places by viewModel.placesList.collectAsState()
 
     val filteredStations = remember(searchQuery, places) {
         places.filter { place ->
@@ -86,6 +86,7 @@ fun SearchStationsScreen(
                     StationItemCard(
                         station = station,
                         onClick = {
+                            viewModel.selectedCategory("all")
                             viewModel.focusOnPlace(station)
                             onStationClick()
                         }
