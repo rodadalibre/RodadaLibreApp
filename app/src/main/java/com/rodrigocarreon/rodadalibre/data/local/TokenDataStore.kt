@@ -21,7 +21,6 @@ class TokenDataStore @Inject constructor(
     suspend fun saveToken(token: String?){
         context.dataStore.edit { prefs->
             prefs[TOKEN_KEY] = token ?: ""
-            println("TOKEEEEEN: $token")
         }
     }
 

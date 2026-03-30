@@ -30,11 +30,7 @@ class AuthRepository @Inject constructor(
 
     suspend fun getUserProfile(): User?{
         try{
-            val token = tokenDataStore.getToken().firstOrNull()
-
-            if (token.isNullOrEmpty()) return null
-
-            val response = api.getUserProfile("Bearer $token")
+            val response = api.getUserProfile()
             if(response.isSuccessful){
                 return response.body()
             }

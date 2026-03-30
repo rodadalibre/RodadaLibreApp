@@ -13,5 +13,5 @@ interface AuthApiClient {
     suspend fun login(@Body request: LoginRequest): Response<LoginResponse>
 
     @POST("v1/auth/me")
-    suspend fun getUserProfile(@Header("Authorization") token: String): Response<User>
+    suspend fun getUserProfile(): Response<User>
 }
