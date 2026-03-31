@@ -14,6 +14,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -40,8 +41,12 @@ fun AuthScreen(
     onNavigateBack: () -> Unit,
     viewModel: LoginViewModel = hiltViewModel()
 ){
+    var isLoginMode by remember {mutableStateOf(true)}
+
+    var name by remember {mutableStateOf("")}
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var password_confirmation by remember { mutableStateOf("") }
 
     val loginState by viewModel.loginState.collectAsState()
 
@@ -65,12 +70,23 @@ fun AuthScreen(
         )
         Spacer(modifier = Modifier.height(24.dp))
         Text(
-            text = "Inicia Sesión",
+            text = if(isLoginMode) "Inicia Sesión" else "Registrate",
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center
         )
         Spacer(modifier = Modifier.height(24.dp))
+        if (!isLoginMode) {
+            OutlinedTextField(
+                value = name,
+                onValueChange = { name = it },
+                label = { Text("Nombre") },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp),
+                singleLine = true
+            )
+        }
         OutlinedTextField(
             value = email,
             onValueChange = { email = it },
@@ -90,6 +106,18 @@ fun AuthScreen(
                 .padding(bottom = 16.dp),
             singleLine = true
         )
+        if (!isLoginMode) {
+            OutlinedTextField(
+                value = password_confirmation,
+                onValueChange = { password_confirmation = it },
+                label = { Text("Confirmar Contraseña") },
+                visualTransformation = PasswordVisualTransformation(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp),
+                singleLine = true
+            )
+        }
 
         if (loginState is LoginState.Error) {
             Text(
@@ -104,12 +132,33 @@ fun AuthScreen(
         } else {
             Button(
                 onClick = {
-                    viewModel.login(email, password)
+                    if(isLoginMode){
+                        viewModel.login(email, password)
+                    }else{
+                        viewModel.register(name, email, password, password_confirmation)
+                    }
                 },
                 modifier = Modifier.fillMaxWidth().height(50.dp)
             ) {
-                Text(text = "Iniciar Sesión", fontSize = 16.sp)
+                Text(
+                    text = if (isLoginMode) "Iniciar Sesión" else "Crear Cuenta",
+                    fontSize = 16.sp
+                )
             }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+        TextButton(
+            onClick = {
+                isLoginMode = !isLoginMode
+            }
+        ) {
+            Text(
+                text = if (isLoginMode) "¿No tienes una cuenta aún? Regístrate"
+                else "¿Ya tienes una cuenta? Inicia Sesión",
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.Bold
+            )
         }
     }
 }

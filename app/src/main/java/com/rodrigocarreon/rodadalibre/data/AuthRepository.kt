@@ -2,6 +2,7 @@ package com.rodrigocarreon.rodadalibre.data
 
 import com.rodrigocarreon.rodadalibre.data.local.TokenDataStore
 import com.rodrigocarreon.rodadalibre.data.model.LoginRequest
+import com.rodrigocarreon.rodadalibre.data.model.RegisterRequest
 import com.rodrigocarreon.rodadalibre.data.model.User
 import com.rodrigocarreon.rodadalibre.data.network.AuthApiClient
 import kotlinx.coroutines.flow.firstOrNull
@@ -14,6 +15,23 @@ class AuthRepository @Inject constructor(
     suspend fun login(email: String, password: String): Boolean{
         try{
             val response = api.login(LoginRequest(email, password))
+
+            if(response.isSuccessful){
+                val token = response.body()?.access_token
+                if (!token.isNullOrEmpty()) {
+                    tokenDataStore.saveToken(token)
+                    return true
+                }
+            }
+            return false
+        }catch (e: Exception){
+            return false
+        }
+    }
+
+    suspend fun register(name: String, email: String, password: String, password_confirmation: String): Boolean{
+        try{
+            val response = api.register(RegisterRequest(name, email, password, password_confirmation))
 
             if(response.isSuccessful){
                 val token = response.body()?.access_token
