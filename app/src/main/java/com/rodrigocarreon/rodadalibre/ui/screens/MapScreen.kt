@@ -84,14 +84,21 @@ fun MapScreen(viewModel: PlacesViewModel, modifier: Modifier = Modifier) {
     var hasLocationPermission by remember { mutableStateOf(false) }
 
     @SuppressLint("MissingPermission")
-    fun centerCameraOnUser() {
+    fun centerCameraOnUser(animate: Boolean = false) {
         fusedLocationClient.lastLocation.addOnSuccessListener { location ->
             if (location != null) {
+                val ubication = LatLng(location.latitude, location.longitude)
+                val zoomLevel = 14.5f
+
                 coroutineScope.launch {
-                    cameraPositionState.position = CameraPosition.fromLatLngZoom(
-                        LatLng(location.latitude, location.longitude),
-                        14.5f
-                    )
+                    if(animate){
+                        cameraPositionState.animate(
+                            update = CameraUpdateFactory.newLatLngZoom(ubication, zoomLevel),
+                            durationMs = 600
+                        )
+                    }else{
+                        cameraPositionState.position = CameraPosition.fromLatLngZoom(ubication, zoomLevel)
+                    }
                 }
             }
         }
@@ -104,7 +111,7 @@ fun MapScreen(viewModel: PlacesViewModel, modifier: Modifier = Modifier) {
                     permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true
 
             if (hasLocationPermission) {
-                centerCameraOnUser()
+                centerCameraOnUser(animate = false)
             }
         }
     )
@@ -134,7 +141,7 @@ fun MapScreen(viewModel: PlacesViewModel, modifier: Modifier = Modifier) {
 
         if (fineLocation || coarseLocation) {
             hasLocationPermission = true
-            centerCameraOnUser()
+            centerCameraOnUser(animate = false)
         } else {
             permissionLauncher.launch(
                 arrayOf(
@@ -208,7 +215,7 @@ fun MapScreen(viewModel: PlacesViewModel, modifier: Modifier = Modifier) {
 
         if(hasLocationPermission){
             FloatingActionButton(
-                onClick = { centerCameraOnUser() },
+                onClick = { centerCameraOnUser(animate = true) },
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
                     .padding(end = 16.dp, bottom = 32.dp),
