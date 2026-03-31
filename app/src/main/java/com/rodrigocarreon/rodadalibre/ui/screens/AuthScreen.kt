@@ -33,7 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.rodrigocarreon.rodadalibre.R
-import com.rodrigocarreon.rodadalibre.ui.viewmodel.LoginState
+import com.rodrigocarreon.rodadalibre.ui.viewmodel.AuthStatus
 import com.rodrigocarreon.rodadalibre.ui.viewmodel.LoginViewModel
 
 @Composable
@@ -51,7 +51,7 @@ fun AuthScreen(
     val loginState by viewModel.loginState.collectAsState()
 
     LaunchedEffect(loginState) {
-        if (loginState is LoginState.Success){
+        if (loginState is AuthStatus.Success){
             viewModel.resetState()
             onNavigateBack()
         }
@@ -119,15 +119,15 @@ fun AuthScreen(
             )
         }
 
-        if (loginState is LoginState.Error) {
+        if (loginState is AuthStatus.Error) {
             Text(
-                text = (loginState as LoginState.Error).message,
+                text = (loginState as AuthStatus.Error).message,
                 color = MaterialTheme.colorScheme.error,
                 modifier = Modifier.padding(bottom = 16.dp)
             )
         }
 
-        if (loginState is LoginState.Loading) {
+        if (loginState is AuthStatus.Loading) {
             CircularProgressIndicator(modifier = Modifier.padding(top = 16.dp))
         } else {
             Button(

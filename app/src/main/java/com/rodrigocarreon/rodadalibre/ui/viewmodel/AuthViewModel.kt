@@ -1,7 +1,5 @@
 package com.rodrigocarreon.rodadalibre.ui.viewmodel
 
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.rodrigocarreon.rodadalibre.domain.LoginUseCase
@@ -18,39 +16,39 @@ class LoginViewModel @Inject constructor(
     private val loginUseCase: LoginUseCase,
     private val registerUseCase: RegisterUseCase
 ): ViewModel() {
-    private val _loginState = MutableStateFlow<LoginState>(LoginState.Idle)
-    val loginState: StateFlow<LoginState> = _loginState.asStateFlow()
+    private val _authStatus = MutableStateFlow<AuthStatus>(AuthStatus.Idle)
+    val loginState: StateFlow<AuthStatus> = _authStatus.asStateFlow()
 
     fun login(email: String, password: String){
         viewModelScope.launch{
-            _loginState.value = LoginState.Loading
+            _authStatus.value = AuthStatus.Loading
             val success = loginUseCase(email, password)
 
-            _loginState.value =
-                if(success) LoginState.Success
-                else LoginState.Error("Credenciales Incorrectas")
+            _authStatus.value =
+                if(success) AuthStatus.Success
+                else AuthStatus.Error("Credenciales Incorrectas")
         }
     }
 
     fun register(name: String, email: String, password: String, password_confirmation: String){
         viewModelScope.launch {
-            _loginState.value = LoginState.Loading
+            _authStatus.value = AuthStatus.Loading
             val success = registerUseCase(name, email, password, password_confirmation)
 
-            _loginState.value =
-                if(success) LoginState.Success
-                else LoginState.Error("Ha ocurrido un error")
+            _authStatus.value =
+                if(success) AuthStatus.Success
+                else AuthStatus.Error("Ha ocurrido un error")
         }
     }
 
     fun resetState() {
-        _loginState.value = LoginState.Idle
+        _authStatus.value = AuthStatus.Idle
     }
 }
 
-sealed class LoginState{
-    object Idle: LoginState()
-    object Loading: LoginState()
-    object Success: LoginState()
-    data class Error(val message: String): LoginState()
+sealed class AuthStatus{
+    object Idle: AuthStatus()
+    object Loading: AuthStatus()
+    object Success: AuthStatus()
+    data class Error(val message: String): AuthStatus()
 }
