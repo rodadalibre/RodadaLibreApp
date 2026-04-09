@@ -23,6 +23,7 @@ import com.rodrigocarreon.rodadalibre.ui.screens.AuthScreen
 import com.rodrigocarreon.rodadalibre.ui.screens.MapScreen
 import com.rodrigocarreon.rodadalibre.ui.screens.ProfileScreen
 import com.rodrigocarreon.rodadalibre.ui.screens.SearchStationsScreen
+import com.rodrigocarreon.rodadalibre.ui.screens.ContributionScreen
 import com.rodrigocarreon.rodadalibre.ui.viewmodel.PlacesViewModel
 
 val ic_map = R.drawable.ic_map
@@ -128,6 +129,9 @@ fun AppNavigation(viewModel: PlacesViewModel){
                         ProfileScreen(
                             onNavigateToAuth = {
                                 navController.navigate("auth_screen")
+                            },
+                            onNavigateToCreate = {
+                                navController.navigate("contribution_screen")
                             }
                         )
                     }
@@ -139,6 +143,19 @@ fun AppNavigation(viewModel: PlacesViewModel){
                         color = MaterialTheme.colorScheme.background
                     ) {
                         AuthScreen(
+                            onNavigateBack = {
+                                navController.popBackStack()
+                            }
+                        )
+                    }
+                }
+
+                composable("contribution_screen") {
+                    Surface(
+                        modifier = Modifier.fillMaxSize(),
+                        color = MaterialTheme.colorScheme.background
+                    ) {
+                        ContributionScreen(
                             onNavigateBack = {
                                 navController.popBackStack()
                             }

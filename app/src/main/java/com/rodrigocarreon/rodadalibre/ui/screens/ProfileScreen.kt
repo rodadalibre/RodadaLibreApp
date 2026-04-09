@@ -24,6 +24,7 @@ import com.rodrigocarreon.rodadalibre.ui.viewmodel.ProfileViewModel
 @Composable
 fun ProfileScreen(
     onNavigateToAuth: () -> Unit,
+    onNavigateToCreate: () -> Unit,
     viewModel: ProfileViewModel = hiltViewModel()
 ) {
     val authState by viewModel.authState.collectAsState()
@@ -45,7 +46,8 @@ fun ProfileScreen(
             is AuthState.Authenticated -> {
                 UserProfileContent(
                     user = state.user,
-                    onLogoutClick = { viewModel.logout() }
+                    onLogoutClick = { viewModel.logout() },
+                    onCreateClick = onNavigateToCreate
                 )
             }
         }
@@ -91,7 +93,7 @@ fun GuestProfileContent(onLoginClick: () -> Unit) {
 }
 
 @Composable
-fun UserProfileContent(user: User, onLogoutClick: () -> Unit) {
+fun UserProfileContent(user: User, onLogoutClick: () -> Unit, onCreateClick: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -123,7 +125,21 @@ fun UserProfileContent(user: User, onLogoutClick: () -> Unit) {
             style = MaterialTheme.typography.bodyLarge,
             color = Color.Gray
         )
-        Spacer(modifier = Modifier.weight(1f))
+        Spacer(modifier = Modifier.weight(0.4f))
+        OutlinedButton(
+            onClick = onCreateClick,
+            modifier = Modifier.fillMaxWidth().height(50.dp),
+            shape = RoundedCornerShape(12.dp),
+            colors = ButtonDefaults.outlinedButtonColors(
+                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+            ),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.onPrimaryContainer)
+        ) {
+            Icon(painter = painterResource(id=R.drawable.ic_add), contentDescription = "Crear nuevo marcador")
+            Spacer(modifier = Modifier.width(8.dp))
+            Text("Crear nuevo marcador", fontWeight = FontWeight.Bold)
+        }
+        Spacer(modifier = Modifier.weight(0.5f))
         OutlinedButton(
             onClick = onLogoutClick,
             modifier = Modifier.fillMaxWidth().height(50.dp),
