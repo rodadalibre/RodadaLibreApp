@@ -1,6 +1,7 @@
 package com.rodrigocarreon.rodadalibre.ui.screens
 
 import android.Manifest
+import android.app.TimePickerDialog
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageManager
@@ -10,6 +11,7 @@ import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -27,6 +29,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
@@ -56,6 +59,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -68,6 +72,7 @@ import com.rodrigocarreon.rodadalibre.R
 import com.rodrigocarreon.rodadalibre.data.model.PlaceType
 import com.rodrigocarreon.rodadalibre.ui.viewmodel.ContributionViewModel
 import java.io.File
+import java.util.Calendar
 
 fun createTempPictureUri(context: Context): Uri {
     val tempFile = File(context.cacheDir, "contribucion_${System.currentTimeMillis()}.jpg")
@@ -96,7 +101,13 @@ fun ContributionScreen(
     var description by rememberSaveable { mutableStateOf("") }
     var capacity by rememberSaveable { mutableStateOf("") }
     var cost by rememberSaveable { mutableStateOf("") }
-    var schedule by rememberSaveable { mutableStateOf("") }
+
+    var scheduleStart by rememberSaveable { mutableStateOf("") }
+    var scheduleEnd by rememberSaveable { mutableStateOf("") }
+
+    val finalSchedule = if (scheduleStart.isNotBlank() && scheduleEnd.isNotBlank()) {
+        "$scheduleStart-$scheduleEnd"
+    } else ""
 
     var imageUrisStrings by rememberSaveable { mutableStateOf(emptyList<String>()) }
     val imageUris = imageUrisStrings.map { Uri.parse(it) }
@@ -149,8 +160,8 @@ fun ContributionScreen(
 
     val isFormValid = name.isNotBlank() && imageUris.isNotEmpty() && when (selectedType) {
         PlaceType.STATION -> capacity.isNotBlank()
-        PlaceType.RESTROOM -> cost.isNotBlank() && schedule.isNotBlank()
-        PlaceType.WORKSHOP, PlaceType.STORE -> schedule.isNotBlank()
+        PlaceType.RESTROOM -> cost.isNotBlank() && finalSchedule.isNotBlank()
+        PlaceType.WORKSHOP, PlaceType.STORE -> finalSchedule.isNotBlank()
         else -> true
     }
 
@@ -221,37 +232,79 @@ fun ContributionScreen(
                 OutlinedTextField(
                     value = capacity,
                     onValueChange = { capacity = it },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     label = { Text("Capacidad de bicicletas") },
                     modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
                     singleLine = true
                 )
             }
             PlaceType.RESTROOM -> {
-                Row(modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)) {
-                    OutlinedTextField(
-                        value = cost,
-                        onValueChange = { cost = it },
-                        label = { Text("Costo") },
-                        modifier = Modifier.weight(1f).padding(end = 8.dp),
-                        singleLine = true
-                    )
-                    OutlinedTextField(
-                        value = schedule,
-                        onValueChange = { schedule = it },
-                        label = { Text("Horario") },
-                        modifier = Modifier.weight(1f),
-                        singleLine = true
-                    )
+                OutlinedTextField(
+                    value = cost,
+                    onValueChange = { cost = it },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    label = { Text("Costo") },
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
+                    singleLine = true
+                )
+                Row(modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Box(modifier = Modifier.weight(1f)) {
+                        OutlinedTextField(
+                            value = scheduleStart, onValueChange = {}, readOnly = true,
+                            label = { Text("Apertura") }, modifier = Modifier.fillMaxWidth(),
+                            trailingIcon = { Icon(painter = painterResource(id=R.drawable.ic_schedule), contentDescription = "Hora decorativa") }
+                        )
+                        Box(
+                            modifier = Modifier
+                                .matchParentSize()
+                                .background(Color.Transparent)
+                                .clickable { showTimePicker(context) { scheduleStart = it } }
+                        )
+                    }
+                    Box(modifier = Modifier.weight(1f)) {
+                        OutlinedTextField(
+                            value = scheduleEnd, onValueChange = {}, readOnly = true,
+                            label = { Text("Cierre") }, modifier = Modifier.fillMaxWidth(),
+                            trailingIcon = { Icon(painter = painterResource(id=R.drawable.ic_schedule), contentDescription = "Hora decorativa") }
+                        )
+                        Box(
+                            modifier = Modifier
+                                .matchParentSize()
+                                .background(Color.Transparent)
+                                .clickable { showTimePicker(context) { scheduleEnd = it } }
+                        )
+                    }
                 }
             }
             PlaceType.WORKSHOP, PlaceType.STORE -> {
-                OutlinedTextField(
-                    value = schedule,
-                    onValueChange = { schedule = it },
-                    label = { Text("Horario de atención") },
-                    modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
-                    singleLine = true
-                )
+                Row(modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Box(modifier = Modifier.weight(1f)) {
+                        OutlinedTextField(
+                            value = scheduleStart, onValueChange = {}, readOnly = true,
+                            label = { Text("Apertura") }, modifier = Modifier.fillMaxWidth(),
+                            trailingIcon = { Icon(painter = painterResource(id=R.drawable.ic_schedule), contentDescription = "Hora decorativa") }
+                        )
+                        Box(
+                            modifier = Modifier
+                                .matchParentSize()
+                                .background(Color.Transparent)
+                                .clickable { showTimePicker(context) { scheduleStart = it } }
+                        )
+                    }
+                    Box(modifier = Modifier.weight(1f)) {
+                        OutlinedTextField(
+                            value = scheduleEnd, onValueChange = {}, readOnly = true,
+                            label = { Text("Cierre") }, modifier = Modifier.fillMaxWidth(),
+                            trailingIcon = { Icon(painter = painterResource(id=R.drawable.ic_schedule), contentDescription = "Hora decorativa") }
+                        )
+                        Box(
+                            modifier = Modifier
+                                .matchParentSize()
+                                .background(Color.Transparent)
+                                .clickable { showTimePicker(context) { scheduleEnd = it } }
+                        )
+                    }
+                }
             }
             else -> {}
         }
@@ -332,7 +385,7 @@ fun ContributionScreen(
 
         Button(
             onClick = {
-                viewModel.submitContribution(selectedType, name, description, capacity, cost, schedule, imageUrisStrings, latitude, longitude)
+                viewModel.submitContribution(selectedType, name, description, capacity, cost, finalSchedule, imageUrisStrings, latitude, longitude)
             },
             modifier = Modifier.fillMaxWidth().height(50.dp),
             shape = RoundedCornerShape(12.dp),
@@ -351,4 +404,18 @@ fun ContributionScreen(
             }
         }
     }
+}
+
+fun showTimePicker(context: Context, onTimeSelected: (String) -> Unit) {
+    val calendar = Calendar.getInstance()
+    TimePickerDialog(
+        context,
+        { _, hourOfDay, minute ->
+            val time = String.format("%02d:%02d", hourOfDay, minute)
+            onTimeSelected(time)
+        },
+        calendar.get(Calendar.HOUR_OF_DAY),
+        calendar.get(Calendar.MINUTE),
+        false
+    ).show()
 }
