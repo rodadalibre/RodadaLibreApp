@@ -29,6 +29,7 @@ val icon_bikestation = R.drawable.ic_bikestation;
 val icon_workshop = R.drawable.ic_workshop;
 val icon_store = R.drawable.ic_store;
 val icon_wc = R.drawable.ic_wc;
+val icon_map = R.drawable.ic_map
 
 data class CategoryItem(val id: String, val title: String, val icon: Int)
 
@@ -38,6 +39,7 @@ fun CategoryFilterMenu(
     onCategorySelected: (String) -> Unit
 ){
     val categories = listOf(
+        CategoryItem("all", "TODOS", icon_map),
         CategoryItem("STATION", "ESTACIONES", icon_bikestation),
         CategoryItem("WORKSHOP", "AGENCIAS", icon_workshop),
         CategoryItem("STORE", "TIENDAS", icon_store),
