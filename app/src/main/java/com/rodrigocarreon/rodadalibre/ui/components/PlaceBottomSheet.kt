@@ -91,7 +91,7 @@ fun PlaceBottomSheet(
                         Button(
                             onClick = {
                                 val uri =
-                                    "https://www.google.com/maps/dir/?api=1&destination=${place.latitude},${place.longitude}".toUri()
+                                    "https://www.google.com/maps/dir/?api=1&destination=${place.latitude},${place.longitude}&travelmode=bicycling".toUri()
 
                                 val mapIntent = Intent(Intent.ACTION_VIEW, uri)
                                 mapIntent.setPackage("com.google.android.apps.maps")
