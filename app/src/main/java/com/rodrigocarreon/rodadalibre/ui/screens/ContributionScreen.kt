@@ -1,6 +1,9 @@
 package com.rodrigocarreon.rodadalibre.ui.screens
 
+import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Context
+import android.content.pm.PackageManager
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
@@ -26,6 +29,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -37,6 +41,8 @@ import androidx.compose.material3.ScrollableTabRow
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -53,10 +59,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
+import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
+import com.google.android.gms.location.LocationServices
 import com.rodrigocarreon.rodadalibre.R
 import com.rodrigocarreon.rodadalibre.data.model.PlaceType
+import com.rodrigocarreon.rodadalibre.ui.viewmodel.ContributionViewModel
 import java.io.File
 
 fun createTempPictureUri(context: Context): Uri {
@@ -72,27 +82,49 @@ fun createTempPictureUri(context: Context): Uri {
 @Composable
 fun ContributionScreen(
     onNavigateBack: () -> Unit,
+    viewModel: ContributionViewModel = hiltViewModel()
 ){
     val context = LocalContext.current
     val scrollState = rememberScrollState()
+    val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
+    val uiState by viewModel.uiState.collectAsState()
 
+    var latitude by rememberSaveable { mutableStateOf("") }
+    var longitude by rememberSaveable { mutableStateOf("") }
     var selectedType by rememberSaveable { mutableStateOf(PlaceType.STATION) }
-
     var name by rememberSaveable { mutableStateOf("") }
     var description by rememberSaveable { mutableStateOf("") }
-
     var capacity by rememberSaveable { mutableStateOf("") }
     var cost by rememberSaveable { mutableStateOf("") }
     var schedule by rememberSaveable { mutableStateOf("") }
 
     var imageUrisStrings by rememberSaveable { mutableStateOf(emptyList<String>()) }
-    var imageUris = imageUrisStrings.map { Uri.parse(it) }
+    val imageUris = imageUrisStrings.map { Uri.parse(it) }
 
     var tempCameraUriString by rememberSaveable { mutableStateOf<String?>(null) }
-    var tempCameraUri = tempCameraUriString?.let { Uri.parse(it) }
-
     val maxPhotos = 5
     val canAddMorePhotos = imageUris.size < maxPhotos
+
+    LaunchedEffect(uiState) {
+        if (uiState is ContributionViewModel.ContributionState.Success) {
+            viewModel.resetState()
+            onNavigateBack()
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        val hasPermission = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
+                ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
+        if (hasPermission) {
+            @SuppressLint("MissingPermission")
+            fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+                if (location != null) {
+                    latitude = location.latitude.toString()
+                    longitude = location.longitude.toString()
+                }
+            }
+        }
+    }
 
     val photoPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickMultipleVisualMedia(maxItems = maxPhotos),
@@ -107,9 +139,10 @@ fun ContributionScreen(
     val cameraLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.TakePicture(),
         onResult = { success ->
-            if (success && tempCameraUri != null && imageUris.size < maxPhotos) {
-                val newPhotoList = imageUris + tempCameraUri!!
-                imageUrisStrings = newPhotoList.map { it.toString() }
+            val uriStr = tempCameraUriString
+            if (success && uriStr != null && imageUris.size < maxPhotos) {
+                val newPhotoList = imageUrisStrings + uriStr
+                imageUrisStrings = newPhotoList
             }
         }
     )
@@ -154,12 +187,7 @@ fun ContributionScreen(
                 Tab(
                     selected = selectedTabIndex == index,
                     onClick = { selectedType = type },
-                    text = {
-                        Text(
-                            text = title,
-                            fontWeight = if (selectedTabIndex == index) FontWeight.Bold else FontWeight.Normal
-                        )
-                    }
+                    text = { Text(text = title, fontWeight = if (selectedTabIndex == index) FontWeight.Bold else FontWeight.Normal) }
                 )
             }
         }
@@ -248,27 +276,13 @@ fun ContributionScreen(
                             model = uri,
                             contentDescription = "Miniatura",
                             contentScale = ContentScale.Crop,
-                            modifier = Modifier
-                                .size(100.dp)
-                                .clip(RoundedCornerShape(12.dp))
-                                .border(1.dp, Color.LightGray, RoundedCornerShape(12.dp))
+                            modifier = Modifier.size(100.dp).clip(RoundedCornerShape(12.dp)).border(1.dp, Color.LightGray, RoundedCornerShape(12.dp))
                         )
                         IconButton(
-                            onClick = {
-                                imageUrisStrings = imageUrisStrings.filter { it != uri.toString() }
-                            },
-                            modifier = Modifier
-                                .align(Alignment.TopEnd)
-                                .offset(x = 4.dp, y = (-4).dp)
-                                .size(24.dp)
-                                .background(Color.Black.copy(alpha = 0.6f), CircleShape)
+                            onClick = { imageUrisStrings = imageUrisStrings.filter { it != uri.toString() } },
+                            modifier = Modifier.align(Alignment.TopEnd).offset(x = 4.dp, y = (-4).dp).size(24.dp).background(Color.Black.copy(alpha = 0.6f), CircleShape)
                         ) {
-                            Icon(
-                                painter = painterResource(id= R.drawable.ic_close),
-                                contentDescription = "Eliminar",
-                                tint = Color.White,
-                                modifier = Modifier.size(14.dp)
-                            )
+                            Icon(painter = painterResource(id= R.drawable.ic_close), contentDescription = "Close", tint = Color.White, modifier = Modifier.size(14.dp))
                         }
                     }
                 }
@@ -287,7 +301,7 @@ fun ContributionScreen(
                 },
                 modifier = Modifier.weight(1f).height(50.dp),
                 shape = RoundedCornerShape(12.dp),
-                enabled = canAddMorePhotos
+                enabled = canAddMorePhotos && uiState !is ContributionViewModel.ContributionState.Loading
             ) {
                 Icon(painter = painterResource(id= R.drawable.ic_camera), contentDescription = "Camera")
                 Spacer(modifier = Modifier.width(8.dp))
@@ -296,13 +310,11 @@ fun ContributionScreen(
 
             OutlinedButton(
                 onClick = {
-                    photoPickerLauncher.launch(
-                        PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-                    )
+                    photoPickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
                 },
                 modifier = Modifier.weight(1f).height(50.dp),
                 shape = RoundedCornerShape(12.dp),
-                enabled = canAddMorePhotos
+                enabled = canAddMorePhotos && uiState !is ContributionViewModel.ContributionState.Loading
             ) {
                 Icon(painter = painterResource(id= R.drawable.ic_gallery), contentDescription = "Gallery")
                 Spacer(modifier = Modifier.width(8.dp))
@@ -310,21 +322,33 @@ fun ContributionScreen(
             }
         }
 
+        if (uiState is ContributionViewModel.ContributionState.Error) {
+            Text(
+                text = (uiState as ContributionViewModel.ContributionState.Error).message,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.padding(bottom = 16.dp)
+            )
+        }
+
         Button(
             onClick = {
-                println("Datos: $name, $description, $capacity")
-                println("Fotos a subir: ${imageUris.size}")
-                // TODO: Enviar a tu API usando MultipartBody.Part
+                viewModel.submitContribution(selectedType, name, description, capacity, cost, schedule, imageUrisStrings, latitude, longitude)
             },
             modifier = Modifier.fillMaxWidth().height(50.dp),
             shape = RoundedCornerShape(12.dp),
-            enabled = name.isNotBlank() && imageUris.isNotEmpty()
+            enabled = isFormValid && latitude.isNotBlank() && longitude.isNotBlank() && uiState !is ContributionViewModel.ContributionState.Loading
         ) {
-            Text(
-                text = "Enviar Contribución",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold
-            )
+            if (uiState is ContributionViewModel.ContributionState.Loading) {
+                CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color.White)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Subiendo...", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            } else {
+                Text(
+                    text = if (latitude.isBlank()) "Obteniendo ubicación..." else "Enviar Contribución",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
         }
     }
 }

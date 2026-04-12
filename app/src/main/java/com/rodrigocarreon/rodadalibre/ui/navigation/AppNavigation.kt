@@ -25,6 +25,7 @@ import com.rodrigocarreon.rodadalibre.ui.screens.ProfileScreen
 import com.rodrigocarreon.rodadalibre.ui.screens.SearchStationsScreen
 import com.rodrigocarreon.rodadalibre.ui.screens.ContributionScreen
 import com.rodrigocarreon.rodadalibre.ui.viewmodel.PlacesViewModel
+import dagger.hilt.android.lifecycle.HiltViewModel
 
 val ic_map = R.drawable.ic_map
 val ic_search = R.drawable.ic_search
@@ -157,6 +158,7 @@ fun AppNavigation(viewModel: PlacesViewModel){
                     ) {
                         ContributionScreen(
                             onNavigateBack = {
+                                viewModel.loadPlaces()
                                 navController.popBackStack()
                             }
                         )
