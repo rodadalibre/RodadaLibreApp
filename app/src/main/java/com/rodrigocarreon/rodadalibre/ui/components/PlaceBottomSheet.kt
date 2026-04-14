@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import coil.compose.AsyncImage
 import com.rodrigocarreon.rodadalibre.R
+import com.rodrigocarreon.rodadalibre.data.model.PlaceType
 import com.rodrigocarreon.rodadalibre.domain.model.Place
 
 val icon_myLocation = R.drawable.ic_mylocation;
@@ -47,6 +48,7 @@ fun PlaceBottomSheet(
     onDimiss: ()-> Unit
 ){
     val context = LocalContext.current
+    val placeType = place.type;
     ModalBottomSheet(
         onDismissRequest = onDimiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
@@ -85,6 +87,60 @@ fun PlaceBottomSheet(
                             style = MaterialTheme.typography.bodyMedium,
                             modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
                         )
+                    }
+
+                    when(placeType){
+                        PlaceType.STATION ->{
+                            Surface(
+                                shape = RoundedCornerShape(8.dp),
+                                border = BorderStroke(1.dp, Color.LightGray),
+                                color = Color.White
+                            ) {
+                                Text(
+                                    text = "Capacidad: "+place.capacity.toString(),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
+                                )
+                            }
+                        }
+                        PlaceType.STORE, PlaceType.WORKSHOP -> {
+                            Surface(
+                                shape = RoundedCornerShape(8.dp),
+                                border = BorderStroke(1.dp, Color.LightGray),
+                                color = Color.White
+                            ) {
+                                Text(
+                                    text = "Horario: " + place.schedule.toString(),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
+                                )
+                            }
+                        }
+                        PlaceType.RESTROOM -> {
+                            Surface(
+                                shape = RoundedCornerShape(8.dp),
+                                border = BorderStroke(1.dp, Color.LightGray),
+                                color = Color.White
+                            ) {
+                                Text(
+                                    text = "Horario: " + place.schedule.toString(),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
+                                )
+                            }
+                            Surface(
+                                shape = RoundedCornerShape(8.dp),
+                                border = BorderStroke(1.dp, Color.LightGray),
+                                color = Color.White
+                            ) {
+                                Text(
+                                    text = "Costo: $" + place.cost.toString(),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
+                                )
+                            }
+                        }
+                        else -> {}
                     }
 
                     if(isOnline){
