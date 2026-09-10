@@ -2,6 +2,7 @@ package com.rodrigocarreon.rodadalibre.ui.view
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
@@ -9,6 +10,7 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.rodrigocarreon.rodadalibre.ui.navigation.AppNavigation
 import com.rodrigocarreon.rodadalibre.ui.viewmodel.PlacesViewModel
 import dagger.hilt.android.AndroidEntryPoint
+import android.graphics.Color as AndroidColor
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -17,7 +19,12 @@ class MainActivity : ComponentActivity() {
         val splashScreen = installSplashScreen()
 
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+        enableEdgeToEdge(
+            statusBarStyle = SystemBarStyle.light(
+                AndroidColor.TRANSPARENT,
+                AndroidColor.TRANSPARENT
+            )
+        )
 
         placesViewModel.loadPlaces()
 
