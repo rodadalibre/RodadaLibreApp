@@ -114,7 +114,7 @@ fun UserProfileContent(user: User, onLogoutClick: () -> Unit) {
 
         Spacer(modifier = Modifier.height(24.dp))
         Text(
-            text = "¡Hola, ${user.name}!",
+            text = "¡Hola, ${user.first_name}!",
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold
         )
