@@ -5,7 +5,6 @@ import com.rodrigocarreon.rodadalibre.data.model.LoginRequest
 import com.rodrigocarreon.rodadalibre.data.model.RegisterRequest
 import com.rodrigocarreon.rodadalibre.data.model.User
 import com.rodrigocarreon.rodadalibre.data.network.AuthApiClient
-import kotlinx.coroutines.flow.firstOrNull
 import javax.inject.Inject
 
 class AuthRepository @Inject constructor(
@@ -69,6 +68,22 @@ class AuthRepository @Inject constructor(
             return false
         }catch (e: Exception){
             tokenDataStore.clearToken()
+            return false
+        }
+    }
+
+    suspend fun refreshToken(): Boolean{
+        try{
+            val response = api.refreshToken()
+            if(response.isSuccessful){
+                val token = response.body()?.access_token
+                if (!token.isNullOrEmpty()) {
+                    tokenDataStore.saveToken(token)
+                    return true
+                }
+            }
+            return false
+        }catch (e: Exception){
             return false
         }
     }

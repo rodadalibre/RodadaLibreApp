@@ -20,4 +20,7 @@ interface AuthApiClient {
 
     @POST("v1/auth/me")
     suspend fun getUserProfile(): Response<User>
+
+    @POST("v1/auth/refresh")
+    suspend fun refreshToken(): Response<AuthResponse>
 }
