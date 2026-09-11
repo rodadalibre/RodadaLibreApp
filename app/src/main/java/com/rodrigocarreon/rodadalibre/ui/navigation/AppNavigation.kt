@@ -24,6 +24,7 @@ import com.rodrigocarreon.rodadalibre.ui.screens.MapScreen
 import com.rodrigocarreon.rodadalibre.ui.screens.ProfileScreen
 import com.rodrigocarreon.rodadalibre.ui.screens.SearchStationsScreen
 import com.rodrigocarreon.rodadalibre.ui.viewmodel.PlacesViewModel
+import com.rodrigocarreon.rodadalibre.ui.screens.ProfileSettingsScreen
 
 val ic_map = R.drawable.ic_map
 val ic_search = R.drawable.ic_search
@@ -128,6 +129,22 @@ fun AppNavigation(viewModel: PlacesViewModel){
                         ProfileScreen(
                             onNavigateToAuth = {
                                 navController.navigate("auth_screen")
+                            },
+                            onNavigateToProfileSettings = {
+                                navController.navigate("profile_settings_screen")
+                            }
+                        )
+                    }
+                }
+
+                composable("profile_settings_screen"){
+                    Surface(
+                        modifier = Modifier.fillMaxSize(),
+                        color = colorScheme.background
+                    ) {
+                        ProfileSettingsScreen(
+                            onNavigateBack = {
+                                navController.popBackStack()
                             }
                         )
                     }

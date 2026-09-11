@@ -24,6 +24,7 @@ import com.rodrigocarreon.rodadalibre.ui.viewmodel.ProfileViewModel
 @Composable
 fun ProfileScreen(
     onNavigateToAuth: () -> Unit,
+    onNavigateToProfileSettings: () -> Unit,
     viewModel: ProfileViewModel = hiltViewModel()
 ) {
     val authState by viewModel.authState.collectAsState()
@@ -45,7 +46,8 @@ fun ProfileScreen(
             is AuthState.Authenticated -> {
                 UserProfileContent(
                     user = state.user,
-                    onLogoutClick = { viewModel.logout() }
+                    onLogoutClick = { viewModel.logout() },
+                    onProfileSettingsClick = onNavigateToProfileSettings
                 )
             }
         }
@@ -91,7 +93,7 @@ fun GuestProfileContent(onLoginClick: () -> Unit) {
 }
 
 @Composable
-fun UserProfileContent(user: User, onLogoutClick: () -> Unit) {
+fun UserProfileContent(user: User, onLogoutClick: () -> Unit, onProfileSettingsClick: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -123,6 +125,15 @@ fun UserProfileContent(user: User, onLogoutClick: () -> Unit) {
             style = MaterialTheme.typography.bodyLarge,
             color = Color.Gray
         )
+        Spacer(modifier = Modifier.weight(0.1f))
+        OutlinedButton(
+            onClick = onProfileSettingsClick,
+            modifier = Modifier.fillMaxWidth(0.5f).height(50.dp),
+            shape = RoundedCornerShape(12.dp),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary)
+        ) {
+            Text("Ver Perfil", fontWeight = FontWeight.Bold)
+        }
         Spacer(modifier = Modifier.weight(1f))
         OutlinedButton(
             onClick = onLogoutClick,
