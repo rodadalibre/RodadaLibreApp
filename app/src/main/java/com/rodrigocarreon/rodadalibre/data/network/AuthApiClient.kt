@@ -12,6 +12,9 @@ interface AuthApiClient {
     @POST("v1/auth/login")
     suspend fun login(@Body request: LoginRequest): Response<AuthResponse>
 
+    @POST("v1/auth/logout")
+    suspend fun logout(): Response<Unit>
+
     @POST("v1/auth/register")
     suspend fun register(@Body request: RegisterRequest): Response<AuthResponse>
 

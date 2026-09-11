@@ -59,7 +59,17 @@ class AuthRepository @Inject constructor(
         }
     }
 
-    suspend fun logout(){
-        tokenDataStore.clearToken()
+    suspend fun logout(): Boolean{
+        try{
+            val response = api.logout()
+            if(response.isSuccessful){
+                tokenDataStore.clearToken()
+                return true
+            }
+            return false
+        }catch (e: Exception){
+            tokenDataStore.clearToken()
+            return false
+        }
     }
 }

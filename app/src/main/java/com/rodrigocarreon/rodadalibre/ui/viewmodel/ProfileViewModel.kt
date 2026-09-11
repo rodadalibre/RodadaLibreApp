@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.rodrigocarreon.rodadalibre.data.AuthRepository
 import com.rodrigocarreon.rodadalibre.data.model.User
+import com.rodrigocarreon.rodadalibre.domain.LogoutUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -19,7 +20,8 @@ sealed class AuthState {
 
 @HiltViewModel
 class ProfileViewModel @Inject constructor(
-    private val repository: AuthRepository
+    private val repository: AuthRepository,
+    private val logoutUseCase: LogoutUseCase
 ) : ViewModel() {
 
     private val _authState = MutableStateFlow<AuthState>(AuthState.Loading)
@@ -29,7 +31,6 @@ class ProfileViewModel @Inject constructor(
         viewModelScope.launch {
             _authState.value = AuthState.Loading
 
-            // Vamos al repositorio a intentar descargar el perfil
             val user = repository.getUserProfile()
 
             if (user != null) {
@@ -42,7 +43,7 @@ class ProfileViewModel @Inject constructor(
 
     fun logout() {
         viewModelScope.launch {
-            repository.logout()
+            logoutUseCase()
             _authState.value = AuthState.Unauthenticated
         }
     }
