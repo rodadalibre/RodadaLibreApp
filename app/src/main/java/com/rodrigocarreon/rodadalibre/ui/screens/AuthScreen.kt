@@ -43,7 +43,8 @@ fun AuthScreen(
 ){
     var isLoginMode by remember {mutableStateOf(true)}
 
-    var name by remember {mutableStateOf("")}
+    var firstName by remember {mutableStateOf("")}
+    var lastName by remember {mutableStateOf("")}
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var password_confirmation by remember { mutableStateOf("") }
@@ -78,9 +79,18 @@ fun AuthScreen(
         Spacer(modifier = Modifier.height(24.dp))
         if (!isLoginMode) {
             OutlinedTextField(
-                value = name,
-                onValueChange = { name = it },
+                value = firstName,
+                onValueChange = { firstName = it },
                 label = { Text("Nombre") },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp),
+                singleLine = true
+            )
+            OutlinedTextField(
+                value = lastName,
+                onValueChange = { lastName = it },
+                label = { Text("Apellido") },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 16.dp),
@@ -135,7 +145,7 @@ fun AuthScreen(
                     if(isLoginMode){
                         viewModel.login(email, password)
                     }else{
-                        viewModel.register(name, email, password, password_confirmation)
+                        viewModel.register(firstName, lastName, email, password, password_confirmation)
                     }
                 },
                 modifier = Modifier.fillMaxWidth().height(50.dp)

@@ -28,9 +28,9 @@ class AuthRepository @Inject constructor(
         }
     }
 
-    suspend fun register(name: String, email: String, password: String, password_confirmation: String): Boolean{
+    suspend fun register(firstName: String, lastName: String, email: String, password: String, password_confirmation: String): Boolean{
         try{
-            val response = api.register(RegisterRequest(name, email, password, password_confirmation))
+            val response = api.register(RegisterRequest(firstName, lastName, email, password, password_confirmation))
 
             if(response.isSuccessful){
                 val token = response.body()?.access_token
