@@ -1,5 +1,6 @@
 package com.rodrigocarreon.rodadalibre.domain
 
+import com.rodrigocarreon.rodadalibre.core.LocationProvider
 import com.rodrigocarreon.rodadalibre.core.NetworkChecker
 import com.rodrigocarreon.rodadalibre.core.NetworkState
 import com.rodrigocarreon.rodadalibre.data.PlaceRepository
@@ -11,29 +12,23 @@ import javax.inject.Inject
 
 class GetPlacesUseCase @Inject constructor(
     private val repository: PlaceRepository,
-    private val networkChecker: NetworkChecker
+    private val networkChecker: NetworkChecker,
+    private val locationProvider: LocationProvider
 ){
     suspend operator fun invoke(onError: (String) -> Unit): List<Place>{
         val state = networkChecker.getCurrentState()
 
-        if(state == NetworkState.OFFLINE){
-            onError("Offline Mode")
-            return repository.getAllPlaces()
-        }
-
-        if(state == NetworkState.NO_INTERNET){
-            onError("No Internet Connection")
+        if(state == NetworkState.OFFLINE || state == NetworkState.NO_INTERNET){
+            onError(OFFLINE_MESSAGE)
             return repository.getAllPlaces()
         }
 
         try {
-            val apiPlaces = repository.getAllPlacesFromApi()
-            if (apiPlaces.isNotEmpty()) {
-                repository.clearPlaces()
-                repository.insertPlaces(apiPlaces.map { it.toDatabase() })
-            }
+            val (lat, lng) = locationProvider.getLocation()
+            val apiPlaces = repository.getAllPlacesFromApi(lat, lng)
+            repository.syncArea(lat, lng, apiPlaces.map { it.toDatabase() })
         }catch (e: IOException){
-            onError("Offline Mode")
+            onError(OFFLINE_MESSAGE)
         } catch (e: HttpException) {
             val messageError = when (e.code()) {
                 500 -> "Server Error (500)"
@@ -46,5 +41,9 @@ class GetPlacesUseCase @Inject constructor(
         }
 
         return repository.getAllPlaces()
+    }
+
+    private companion object {
+        const val OFFLINE_MESSAGE = "Modo offline: conéctate a internet para obtener los datos más recientes"
     }
 }

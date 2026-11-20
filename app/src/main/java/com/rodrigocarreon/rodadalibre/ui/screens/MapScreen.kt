@@ -112,6 +112,8 @@ fun MapScreen(viewModel: PlacesViewModel, modifier: Modifier = Modifier) {
 
             if (hasLocationPermission) {
                 centerCameraOnUser(animate = false)
+                // First sync ran with the default location; refresh with the real one
+                viewModel.loadPlaces()
             }
         }
     )
