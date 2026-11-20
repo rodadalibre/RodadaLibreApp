@@ -13,27 +13,20 @@ class GetPlacesUseCase @Inject constructor(
     private val repository: PlaceRepository,
     private val networkChecker: NetworkChecker
 ){
-    suspend operator fun invoke(onError: (String) -> Unit): List<Place>{
+    /** Syncs the area around the user's (lat, lng) and returns the cached places in it. */
+    suspend operator fun invoke(lat: Double, lng: Double, onError: (String) -> Unit): List<Place>{
         val state = networkChecker.getCurrentState()
 
-        if(state == NetworkState.OFFLINE){
-            onError("Offline Mode")
-            return repository.getAllPlaces()
-        }
-
-        if(state == NetworkState.NO_INTERNET){
-            onError("No Internet Connection")
-            return repository.getAllPlaces()
+        if(state == NetworkState.OFFLINE || state == NetworkState.NO_INTERNET){
+            onError(OFFLINE_MESSAGE)
+            return repository.getPlacesNear(lat, lng)
         }
 
         try {
-            val apiPlaces = repository.getAllPlacesFromApi()
-            if (apiPlaces.isNotEmpty()) {
-                repository.clearPlaces()
-                repository.insertPlaces(apiPlaces.map { it.toDatabase() })
-            }
+            val apiPlaces = repository.getAllPlacesFromApi(lat, lng)
+            repository.syncArea(lat, lng, apiPlaces.map { it.toDatabase() })
         }catch (e: IOException){
-            onError("Offline Mode")
+            onError(OFFLINE_MESSAGE)
         } catch (e: HttpException) {
             val messageError = when (e.code()) {
                 500 -> "Server Error (500)"
@@ -45,6 +38,10 @@ class GetPlacesUseCase @Inject constructor(
             onError("Something went wrong")
         }
 
-        return repository.getAllPlaces()
+        return repository.getPlacesNear(lat, lng)
+    }
+
+    private companion object {
+        const val OFFLINE_MESSAGE = "Modo offline: conéctate a internet para obtener los datos más recientes"
     }
 }

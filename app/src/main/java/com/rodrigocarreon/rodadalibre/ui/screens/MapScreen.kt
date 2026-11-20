@@ -112,6 +112,8 @@ fun MapScreen(viewModel: PlacesViewModel, modifier: Modifier = Modifier) {
 
             if (hasLocationPermission) {
                 centerCameraOnUser(animate = false)
+                // First sync ran with the default location; refresh with the real one
+                viewModel.loadPlaces()
             }
         }
     )
@@ -149,6 +151,13 @@ fun MapScreen(viewModel: PlacesViewModel, modifier: Modifier = Modifier) {
                     Manifest.permission.ACCESS_COARSE_LOCATION
                 )
             )
+        }
+    }
+
+    LaunchedEffect(cameraPositionState.isMoving) {
+        if (!cameraPositionState.isMoving) {
+            val position = cameraPositionState.position
+            viewModel.onCameraIdle(position.target.latitude, position.target.longitude, position.zoom)
         }
     }
 
