@@ -16,15 +16,16 @@ class GetPlacesUseCase @Inject constructor(
     private val locationProvider: LocationProvider
 ){
     suspend operator fun invoke(onError: (String) -> Unit): List<Place>{
+        // Location works without internet, so offline results are filtered to the current city too
+        val (lat, lng) = locationProvider.getLocation()
         val state = networkChecker.getCurrentState()
 
         if(state == NetworkState.OFFLINE || state == NetworkState.NO_INTERNET){
             onError(OFFLINE_MESSAGE)
-            return repository.getAllPlaces()
+            return repository.getPlacesNear(lat, lng)
         }
 
         try {
-            val (lat, lng) = locationProvider.getLocation()
             val apiPlaces = repository.getAllPlacesFromApi(lat, lng)
             repository.syncArea(lat, lng, apiPlaces.map { it.toDatabase() })
         }catch (e: IOException){
@@ -40,7 +41,7 @@ class GetPlacesUseCase @Inject constructor(
             onError("Something went wrong")
         }
 
-        return repository.getAllPlaces()
+        return repository.getPlacesNear(lat, lng)
     }
 
     private companion object {
