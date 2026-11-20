@@ -46,6 +46,7 @@ class PlacesViewModel @Inject constructor(
 
     // Places around where the map camera is, kept in memory only (never saved)
     private val _areaPlaces = MutableStateFlow<List<Place>>(emptyList())
+    private var userLocation: Pair<Double, Double>? = null
     private var lastFetchCenter: Pair<Double, Double>? = null
     private var areaJob: Job? = null
 
@@ -64,8 +65,8 @@ class PlacesViewModel @Inject constructor(
             _isLoading.value = true
 
             val (lat, lng) = locationProvider.getLocation()
-            areaJob?.cancel()
-            _areaPlaces.value = emptyList()
+            clearArea()
+            userLocation = lat to lng
             lastFetchCenter = lat to lng
 
             val result = getPlacesUseCase(lat, lng){ errorMessage ->
@@ -77,19 +78,37 @@ class PlacesViewModel @Inject constructor(
         }
     }
 
-    /** Called when the map camera stops; loads places around its center if it moved far enough. */
+    /**
+     * Called when the map camera stops. Loads places around its center only when zoomed into a
+     * city outside the user's synced area, and only if it moved far enough from the last fetch.
+     */
     fun onCameraIdle(lat: Double, lng: Double, zoom: Float){
-        val last = lastFetchCenter ?: return // initial load still running
+        val user = userLocation ?: return // initial load still running
+        val last = lastFetchCenter ?: return
         if (zoom < MIN_AREA_ZOOM) return
+
+        // Back in the user's own area (already loaded from the local DB): drop the browsed city,
+        // no request, no offline notice
+        if (distanceMeters(user, lat, lng) <= LocationProvider.SYNC_RADIUS_METERS) {
+            clearArea()
+            lastFetchCenter = user // so browsing the same city again fetches it again
+            return
+        }
         if (distanceMeters(last, lat, lng) < AREA_REFETCH_METERS) return
 
+        // Only one browsed city at a time: remove the previous one right away
+        clearArea()
         lastFetchCenter = lat to lng
-        areaJob?.cancel()
         areaJob = viewModelScope.launch {
             _areaPlaces.value = getPlacesAroundUseCase(lat, lng){ errorMessage ->
                 _networkMessage.value = errorMessage
             }
         }
+    }
+
+    private fun clearArea() {
+        areaJob?.cancel()
+        _areaPlaces.value = emptyList()
     }
 
     private fun distanceMeters(from: Pair<Double, Double>, lat: Double, lng: Double): Float {
