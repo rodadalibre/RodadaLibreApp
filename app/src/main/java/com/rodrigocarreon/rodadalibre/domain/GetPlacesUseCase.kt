@@ -1,6 +1,5 @@
 package com.rodrigocarreon.rodadalibre.domain
 
-import com.rodrigocarreon.rodadalibre.core.LocationProvider
 import com.rodrigocarreon.rodadalibre.core.NetworkChecker
 import com.rodrigocarreon.rodadalibre.core.NetworkState
 import com.rodrigocarreon.rodadalibre.data.PlaceRepository
@@ -12,12 +11,10 @@ import javax.inject.Inject
 
 class GetPlacesUseCase @Inject constructor(
     private val repository: PlaceRepository,
-    private val networkChecker: NetworkChecker,
-    private val locationProvider: LocationProvider
+    private val networkChecker: NetworkChecker
 ){
-    suspend operator fun invoke(onError: (String) -> Unit): List<Place>{
-        // Location works without internet, so offline results are filtered to the current city too
-        val (lat, lng) = locationProvider.getLocation()
+    /** Syncs the area around the user's (lat, lng) and returns the cached places in it. */
+    suspend operator fun invoke(lat: Double, lng: Double, onError: (String) -> Unit): List<Place>{
         val state = networkChecker.getCurrentState()
 
         if(state == NetworkState.OFFLINE || state == NetworkState.NO_INTERNET){

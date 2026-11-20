@@ -154,6 +154,13 @@ fun MapScreen(viewModel: PlacesViewModel, modifier: Modifier = Modifier) {
         }
     }
 
+    LaunchedEffect(cameraPositionState.isMoving) {
+        if (!cameraPositionState.isMoving) {
+            val position = cameraPositionState.position
+            viewModel.onCameraIdle(position.target.latitude, position.target.longitude, position.zoom)
+        }
+    }
+
     LaunchedEffect(networkMessage) {
         if (networkMessage.isNotEmpty()) {
             snackbarHostState.showSnackbar(networkMessage)
