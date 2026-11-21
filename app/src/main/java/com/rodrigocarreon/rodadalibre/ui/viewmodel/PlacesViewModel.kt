@@ -11,7 +11,10 @@ import com.rodrigocarreon.rodadalibre.domain.GetPlacesAroundUseCase
 import com.rodrigocarreon.rodadalibre.domain.GetPlacesUseCase
 import com.rodrigocarreon.rodadalibre.domain.model.Place
 import dagger.hilt.android.lifecycle.HiltViewModel
+import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.LatLngBounds
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -53,6 +56,10 @@ class PlacesViewModel @Inject constructor(
     private val _isLoadingArea = MutableStateFlow(false)
     val isLoadingArea: StateFlow<Boolean> = _isLoadingArea.asStateFlow()
 
+    // Browsed city came back empty; shown as a pill for a few seconds
+    private val _showNoAreaPlaces = MutableStateFlow(false)
+    val showNoAreaPlaces: StateFlow<Boolean> = _showNoAreaPlaces.asStateFlow()
+
     // Map shows the user's nearby places plus the browsed area; search keeps using placesList
     val fileredPlaces: StateFlow<List<Place>> = combine(_placesList, _areaPlaces, _selectedCategory){ nearby, area, category ->
         val places = (nearby + area).distinctBy { it.id }
@@ -85,7 +92,7 @@ class PlacesViewModel @Inject constructor(
      * Called when the map camera stops. Loads places around its center only when zoomed into a
      * city outside the user's synced area, and only if it moved far enough from the last fetch.
      */
-    fun onCameraIdle(lat: Double, lng: Double, zoom: Float){
+    fun onCameraIdle(lat: Double, lng: Double, zoom: Float, visibleBounds: LatLngBounds?){
         val user = userLocation ?: return // initial load still running
         val last = lastFetchCenter ?: return
         if (zoom < MIN_AREA_ZOOM) return
@@ -104,17 +111,31 @@ class PlacesViewModel @Inject constructor(
         lastFetchCenter = lat to lng
         _isLoadingArea.value = true
         areaJob = viewModelScope.launch {
-            _areaPlaces.value = getPlacesAroundUseCase(lat, lng){ errorMessage ->
+            var notified = false
+            val places = getPlacesAroundUseCase(lat, lng){ errorMessage ->
+                notified = true
                 _networkMessage.value = errorMessage
             }
-            // Not reached when cancelled: clearArea() already reset the flag
+            _areaPlaces.value = places
+            // Not reached when cancelled: clearArea() already reset the flags
             _isLoadingArea.value = false
+            // The API radius (30 km) is far wider than the screen at city zoom, so "empty" means
+            // nothing inside what the user is looking at. Offline already shows its own notice.
+            val nothingVisible = places.none {
+                visibleBounds?.contains(LatLng(it.latitude, it.longitude)) ?: true
+            }
+            if (nothingVisible && !notified) {
+                _showNoAreaPlaces.value = true
+                delay(NO_AREA_PLACES_MILLIS)
+                _showNoAreaPlaces.value = false
+            }
         }
     }
 
     private fun clearArea() {
         areaJob?.cancel()
         _isLoadingArea.value = false
+        _showNoAreaPlaces.value = false
         _areaPlaces.value = emptyList()
     }
 
@@ -128,6 +149,7 @@ class PlacesViewModel @Inject constructor(
         const val AREA_REFETCH_METERS = 15_000f
         // City level: below this zoom the camera is too far out to fetch anything
         const val MIN_AREA_ZOOM = 13f
+        const val NO_AREA_PLACES_MILLIS = 4_000L
     }
 
     fun selectedCategory(category: String){

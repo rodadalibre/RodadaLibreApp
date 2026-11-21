@@ -34,6 +34,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -77,6 +78,7 @@ fun MapScreen(viewModel: PlacesViewModel, modifier: Modifier = Modifier) {
 
     val isLoading by viewModel.isLoading.collectAsState()
     val isLoadingArea by viewModel.isLoadingArea.collectAsState()
+    val showNoAreaPlaces by viewModel.showNoAreaPlaces.collectAsState()
     val networkMessage by viewModel.networkMessage.collectAsState()
 
     val snackbarHostState = remember { SnackbarHostState() }
@@ -164,7 +166,12 @@ fun MapScreen(viewModel: PlacesViewModel, modifier: Modifier = Modifier) {
     LaunchedEffect(cameraPositionState.isMoving) {
         if (!cameraPositionState.isMoving) {
             val position = cameraPositionState.position
-            viewModel.onCameraIdle(position.target.latitude, position.target.longitude, position.zoom)
+            viewModel.onCameraIdle(
+                position.target.latitude,
+                position.target.longitude,
+                position.zoom,
+                cameraPositionState.projection?.visibleRegion?.latLngBounds
+            )
         }
     }
 
@@ -250,23 +257,11 @@ fun MapScreen(viewModel: PlacesViewModel, modifier: Modifier = Modifier) {
         }
 
         // Non-blocking: the user can keep moving the map while the browsed city loads
+        val pillModifier = Modifier.align(Alignment.TopCenter).padding(top = 70.dp)
         if (isLoadingArea) {
-            Surface(
-                modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .padding(top = 70.dp),
-                shape = RoundedCornerShape(50),
-                shadowElevation = 4.dp
-            ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
-                    Text("Cargando puntos de esta zona…", style = MaterialTheme.typography.bodySmall)
-                }
-            }
+            MapStatusPill("Cargando puntos de esta zona…", showSpinner = true, modifier = pillModifier)
+        } else if (showNoAreaPlaces) {
+            MapStatusPill("No hay puntos disponibles en esta zona", modifier = pillModifier)
         }
 
         SnackbarHost(
@@ -287,5 +282,20 @@ fun MapScreen(viewModel: PlacesViewModel, modifier: Modifier = Modifier) {
                 selectedPlace = null
             }
         )
+    }
+}
+@Composable
+private fun MapStatusPill(text: String, modifier: Modifier = Modifier, showSpinner: Boolean = false) {
+    Surface(modifier = modifier, shape = RoundedCornerShape(50), shadowElevation = 4.dp) {
+        Row(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            if (showSpinner) {
+                CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
+            }
+            Text(text, style = MaterialTheme.typography.bodySmall)
+        }
     }
 }
