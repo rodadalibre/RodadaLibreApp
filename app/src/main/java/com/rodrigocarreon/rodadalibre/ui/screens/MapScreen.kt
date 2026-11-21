@@ -5,21 +5,13 @@ import android.annotation.SuppressLint
 import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -34,7 +26,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -62,6 +53,8 @@ import com.rodrigocarreon.rodadalibre.ui.components.icon_myLocation
 import com.rodrigocarreon.rodadalibre.core.bitmapDescriptorFromVector
 import com.rodrigocarreon.rodadalibre.ui.components.CategoryFilterMenu
 import com.rodrigocarreon.rodadalibre.ui.components.PlaceBottomSheet
+import com.rodrigocarreon.rodadalibre.ui.components.StatusPill
+import kotlinx.coroutines.delay
 
 @Composable
 fun MapScreen(viewModel: PlacesViewModel, modifier: Modifier = Modifier) {
@@ -80,8 +73,6 @@ fun MapScreen(viewModel: PlacesViewModel, modifier: Modifier = Modifier) {
     val isLoadingArea by viewModel.isLoadingArea.collectAsState()
     val showNoAreaPlaces by viewModel.showNoAreaPlaces.collectAsState()
     val networkMessage by viewModel.networkMessage.collectAsState()
-
-    val snackbarHostState = remember { SnackbarHostState() }
 
     // Default Aguascalientes coordinates
     val cameraPositionState = rememberCameraPositionState {
@@ -177,7 +168,7 @@ fun MapScreen(viewModel: PlacesViewModel, modifier: Modifier = Modifier) {
 
     LaunchedEffect(networkMessage) {
         if (networkMessage.isNotEmpty()) {
-            snackbarHostState.showSnackbar(networkMessage)
+            delay(MESSAGE_PILL_MILLIS)
             viewModel.clearNetworkMessage()
         }
     }
@@ -257,20 +248,13 @@ fun MapScreen(viewModel: PlacesViewModel, modifier: Modifier = Modifier) {
         }
 
         // Non-blocking: the user can keep moving the map while the browsed city loads
-        val pillModifier = Modifier.align(Alignment.TopCenter).padding(top = 70.dp)
+        val pillModifier = Modifier.align(Alignment.TopCenter).padding(top = 70.dp, start = 16.dp, end = 16.dp)
         if (isLoadingArea) {
-            MapStatusPill("Cargando puntos de esta zona…", showSpinner = true, modifier = pillModifier)
+            StatusPill("Cargando puntos de esta zona…", showSpinner = true, modifier = pillModifier)
+        } else if (networkMessage.isNotEmpty()) {
+            StatusPill(networkMessage, iconRes = R.drawable.ic_warning, modifier = pillModifier)
         } else if (showNoAreaPlaces) {
-            MapStatusPill("No hay puntos disponibles en esta zona", iconRes = R.drawable.ic_warning, modifier = pillModifier)
-        }
-
-        SnackbarHost(
-            hostState = snackbarHostState,
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .padding(top = 70.dp)
-        ) { data ->
-            androidx.compose.material3.Snackbar(snackbarData = data)
+            StatusPill("No hay puntos disponibles en esta zona", iconRes = R.drawable.ic_warning, modifier = pillModifier)
         }
     }
     if (showBottomSheet && selectedPlace != null) {
@@ -284,33 +268,5 @@ fun MapScreen(viewModel: PlacesViewModel, modifier: Modifier = Modifier) {
         )
     }
 }
-@Composable
-private fun MapStatusPill(
-    text: String,
-    modifier: Modifier = Modifier,
-    showSpinner: Boolean = false,
-    iconRes: Int? = null
-) {
-    // Sizes are the original pill (16/8 dp padding, 16 dp spinner, bodySmall 12 sp) scaled x1.2
-    Surface(modifier = modifier, shape = RoundedCornerShape(50), shadowElevation = 5.dp) {
-        Row(
-            modifier = Modifier.padding(horizontal = 19.dp, vertical = 10.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            if (showSpinner) {
-                CircularProgressIndicator(modifier = Modifier.size(19.dp), strokeWidth = 2.4.dp)
-            }
-            if (iconRes != null) {
-                // Decorative: the text already says it, so screen readers skip the icon
-                Icon(
-                    painter = painterResource(id = iconRes),
-                    contentDescription = null,
-                    tint = Color(0xFFF9A825),
-                    modifier = Modifier.size(19.dp)
-                )
-            }
-            Text(text, style = MaterialTheme.typography.bodySmall.copy(fontSize = 14.sp, lineHeight = 19.sp))
-        }
-    }
-}
+
+private const val MESSAGE_PILL_MILLIS = 4_000L

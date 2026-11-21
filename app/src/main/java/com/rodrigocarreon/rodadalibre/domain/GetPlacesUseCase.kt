@@ -29,13 +29,13 @@ class GetPlacesUseCase @Inject constructor(
             onError(OFFLINE_MESSAGE)
         } catch (e: HttpException) {
             val messageError = when (e.code()) {
-                500 -> "Server Error (500)"
-                404 -> "Not Found (404)"
-                else -> "Something went wrong (${e.code()})"
+                500 -> "Error del servidor (500)"
+                404 -> "No se encontró el recurso (404)"
+                else -> "No se pudieron actualizar los puntos (error ${e.code()}), se muestran los guardados"
             }
             onError(messageError)
         } catch (e: Exception) {
-            onError("Something went wrong")
+            onError("No se pudieron actualizar los puntos, se muestran los guardados")
         }
 
         return repository.getPlacesNear(lat, lng)
