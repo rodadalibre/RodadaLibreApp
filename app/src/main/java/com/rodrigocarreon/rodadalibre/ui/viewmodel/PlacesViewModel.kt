@@ -10,6 +10,7 @@ import com.rodrigocarreon.rodadalibre.data.model.PlaceType
 import com.rodrigocarreon.rodadalibre.domain.GetPlacesAroundUseCase
 import com.rodrigocarreon.rodadalibre.domain.GetPlacesUseCase
 import com.rodrigocarreon.rodadalibre.domain.model.Place
+import com.rodrigocarreon.rodadalibre.domain.model.StatusMessage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
@@ -34,8 +35,8 @@ class PlacesViewModel @Inject constructor(
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
-    private val _networkMessage = MutableStateFlow("")
-    val networkMessage: StateFlow<String> = _networkMessage.asStateFlow()
+    private val _networkMessage = MutableStateFlow<StatusMessage?>(null)
+    val networkMessage: StateFlow<StatusMessage?> = _networkMessage.asStateFlow()
 
     private val _placesList = MutableStateFlow<List<Place>>(emptyList())
 
@@ -157,7 +158,7 @@ class PlacesViewModel @Inject constructor(
     }
 
     fun clearNetworkMessage() {
-        _networkMessage.value = ""
+        _networkMessage.value = null
     }
 
     fun isInternetAvailable():  Boolean{

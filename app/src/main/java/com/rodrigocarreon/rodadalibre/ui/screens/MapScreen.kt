@@ -167,7 +167,7 @@ fun MapScreen(viewModel: PlacesViewModel, modifier: Modifier = Modifier) {
     }
 
     LaunchedEffect(networkMessage) {
-        if (networkMessage.isNotEmpty()) {
+        if (networkMessage != null) {
             delay(MESSAGE_PILL_MILLIS)
             viewModel.clearNetworkMessage()
         }
@@ -251,8 +251,14 @@ fun MapScreen(viewModel: PlacesViewModel, modifier: Modifier = Modifier) {
         val pillModifier = Modifier.align(Alignment.TopCenter).padding(top = 70.dp, start = 16.dp, end = 16.dp)
         if (isLoadingArea) {
             StatusPill("Cargando puntos de esta zona…", showSpinner = true, modifier = pillModifier)
-        } else if (networkMessage.isNotEmpty()) {
-            StatusPill(networkMessage, iconRes = R.drawable.ic_warning, modifier = pillModifier)
+        } else if (networkMessage != null) {
+            val message = networkMessage!!
+            StatusPill(
+                title = message.title,
+                description = message.description,
+                iconRes = if (message.isOffline) R.drawable.ic_wifi_off else R.drawable.ic_warning,
+                modifier = pillModifier
+            )
         } else if (showNoAreaPlaces) {
             StatusPill("No hay puntos disponibles en esta zona", iconRes = R.drawable.ic_warning, modifier = pillModifier)
         }

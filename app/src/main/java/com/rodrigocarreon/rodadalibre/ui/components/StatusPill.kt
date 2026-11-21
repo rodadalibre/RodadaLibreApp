@@ -1,6 +1,7 @@
 package com.rodrigocarreon.rodadalibre.ui.components
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -16,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
@@ -24,8 +26,9 @@ import androidx.compose.ui.unit.sp
 /** Small rounded status message (loading, warnings) shown over a screen. */
 @Composable
 fun StatusPill(
-    text: String,
+    title: String,
     modifier: Modifier = Modifier,
+    description: String? = null,
     showSpinner: Boolean = false,
     iconRes: Int? = null
 ) {
@@ -49,7 +52,16 @@ fun StatusPill(
                     modifier = Modifier.size(19.dp)
                 )
             }
-            Text(text, style = MaterialTheme.typography.bodySmall.copy(fontSize = 14.sp, lineHeight = 19.sp))
+            Column {
+                Text(
+                    title,
+                    style = MaterialTheme.typography.bodySmall.copy(fontSize = 14.sp, lineHeight = 19.sp),
+                    fontWeight = FontWeight.Bold
+                )
+                if (description != null) {
+                    Text(description, style = MaterialTheme.typography.bodySmall)
+                }
+            }
         }
     }
 }
