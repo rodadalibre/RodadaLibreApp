@@ -50,6 +50,9 @@ class PlacesViewModel @Inject constructor(
     private var lastFetchCenter: Pair<Double, Double>? = null
     private var areaJob: Job? = null
 
+    private val _isLoadingArea = MutableStateFlow(false)
+    val isLoadingArea: StateFlow<Boolean> = _isLoadingArea.asStateFlow()
+
     // Map shows the user's nearby places plus the browsed area; search keeps using placesList
     val fileredPlaces: StateFlow<List<Place>> = combine(_placesList, _areaPlaces, _selectedCategory){ nearby, area, category ->
         val places = (nearby + area).distinctBy { it.id }
@@ -99,15 +102,19 @@ class PlacesViewModel @Inject constructor(
         // Only one browsed city at a time: remove the previous one right away
         clearArea()
         lastFetchCenter = lat to lng
+        _isLoadingArea.value = true
         areaJob = viewModelScope.launch {
             _areaPlaces.value = getPlacesAroundUseCase(lat, lng){ errorMessage ->
                 _networkMessage.value = errorMessage
             }
+            // Not reached when cancelled: clearArea() already reset the flag
+            _isLoadingArea.value = false
         }
     }
 
     private fun clearArea() {
         areaJob?.cancel()
+        _isLoadingArea.value = false
         _areaPlaces.value = emptyList()
     }
 

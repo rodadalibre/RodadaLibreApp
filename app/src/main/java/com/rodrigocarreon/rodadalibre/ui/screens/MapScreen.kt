@@ -5,15 +5,21 @@ import android.annotation.SuppressLint
 import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -70,6 +76,7 @@ fun MapScreen(viewModel: PlacesViewModel, modifier: Modifier = Modifier) {
     var showBottomSheet by remember { mutableStateOf(false) }
 
     val isLoading by viewModel.isLoading.collectAsState()
+    val isLoadingArea by viewModel.isLoadingArea.collectAsState()
     val networkMessage by viewModel.networkMessage.collectAsState()
 
     val snackbarHostState = remember { SnackbarHostState() }
@@ -240,6 +247,26 @@ fun MapScreen(viewModel: PlacesViewModel, modifier: Modifier = Modifier) {
 
         if (isLoading) {
             CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+        }
+
+        // Non-blocking: the user can keep moving the map while the browsed city loads
+        if (isLoadingArea) {
+            Surface(
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .padding(top = 70.dp),
+                shape = RoundedCornerShape(50),
+                shadowElevation = 4.dp
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
+                    Text("Cargando puntos de esta zona…", style = MaterialTheme.typography.bodySmall)
+                }
+            }
         }
 
         SnackbarHost(
