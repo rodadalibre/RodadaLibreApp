@@ -12,8 +12,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -55,6 +53,8 @@ import com.rodrigocarreon.rodadalibre.ui.components.icon_myLocation
 import com.rodrigocarreon.rodadalibre.core.bitmapDescriptorFromVector
 import com.rodrigocarreon.rodadalibre.ui.components.CategoryFilterMenu
 import com.rodrigocarreon.rodadalibre.ui.components.PlaceBottomSheet
+import com.rodrigocarreon.rodadalibre.ui.components.StatusPill
+import kotlinx.coroutines.delay
 
 @Composable
 fun MapScreen(viewModel: PlacesViewModel, modifier: Modifier = Modifier) {
@@ -70,9 +70,9 @@ fun MapScreen(viewModel: PlacesViewModel, modifier: Modifier = Modifier) {
     var showBottomSheet by remember { mutableStateOf(false) }
 
     val isLoading by viewModel.isLoading.collectAsState()
+    val isLoadingArea by viewModel.isLoadingArea.collectAsState()
+    val showNoAreaPlaces by viewModel.showNoAreaPlaces.collectAsState()
     val networkMessage by viewModel.networkMessage.collectAsState()
-
-    val snackbarHostState = remember { SnackbarHostState() }
 
     // Default Aguascalientes coordinates
     val cameraPositionState = rememberCameraPositionState {
@@ -157,13 +157,18 @@ fun MapScreen(viewModel: PlacesViewModel, modifier: Modifier = Modifier) {
     LaunchedEffect(cameraPositionState.isMoving) {
         if (!cameraPositionState.isMoving) {
             val position = cameraPositionState.position
-            viewModel.onCameraIdle(position.target.latitude, position.target.longitude, position.zoom)
+            viewModel.onCameraIdle(
+                position.target.latitude,
+                position.target.longitude,
+                position.zoom,
+                cameraPositionState.projection?.visibleRegion?.latLngBounds
+            )
         }
     }
 
     LaunchedEffect(networkMessage) {
-        if (networkMessage.isNotEmpty()) {
-            snackbarHostState.showSnackbar(networkMessage)
+        if (networkMessage != null) {
+            delay(MESSAGE_PILL_MILLIS)
             viewModel.clearNetworkMessage()
         }
     }
@@ -242,13 +247,20 @@ fun MapScreen(viewModel: PlacesViewModel, modifier: Modifier = Modifier) {
             CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
         }
 
-        SnackbarHost(
-            hostState = snackbarHostState,
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .padding(top = 70.dp)
-        ) { data ->
-            androidx.compose.material3.Snackbar(snackbarData = data)
+        // Non-blocking: the user can keep moving the map while the browsed city loads
+        val pillModifier = Modifier.align(Alignment.TopCenter).padding(top = 70.dp, start = 16.dp, end = 16.dp)
+        if (isLoadingArea) {
+            StatusPill("Cargando puntos de esta zona…", showSpinner = true, modifier = pillModifier)
+        } else if (networkMessage != null) {
+            val message = networkMessage!!
+            StatusPill(
+                title = message.title,
+                description = message.description,
+                iconRes = if (message.isOffline) R.drawable.ic_wifi_off else R.drawable.ic_warning,
+                modifier = pillModifier
+            )
+        } else if (showNoAreaPlaces) {
+            StatusPill("No hay puntos disponibles en esta zona", iconRes = R.drawable.ic_warning, modifier = pillModifier)
         }
     }
     if (showBottomSheet && selectedPlace != null) {
@@ -262,3 +274,5 @@ fun MapScreen(viewModel: PlacesViewModel, modifier: Modifier = Modifier) {
         )
     }
 }
+
+private const val MESSAGE_PILL_MILLIS = 4_000L

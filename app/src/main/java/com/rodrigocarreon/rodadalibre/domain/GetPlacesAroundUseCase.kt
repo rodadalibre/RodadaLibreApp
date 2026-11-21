@@ -5,6 +5,7 @@ import com.rodrigocarreon.rodadalibre.core.NetworkState
 import com.rodrigocarreon.rodadalibre.data.PlaceRepository
 import com.rodrigocarreon.rodadalibre.data.database.entities.toDatabase
 import com.rodrigocarreon.rodadalibre.domain.model.Place
+import com.rodrigocarreon.rodadalibre.domain.model.StatusMessage
 import com.rodrigocarreon.rodadalibre.domain.model.toDomain
 import kotlinx.coroutines.CancellationException
 import javax.inject.Inject
@@ -17,7 +18,7 @@ class GetPlacesAroundUseCase @Inject constructor(
     private val repository: PlaceRepository,
     private val networkChecker: NetworkChecker
 ){
-    suspend operator fun invoke(lat: Double, lng: Double, onError: (String) -> Unit): List<Place>{
+    suspend operator fun invoke(lat: Double, lng: Double, onError: (StatusMessage) -> Unit): List<Place>{
         if (networkChecker.getCurrentState() == NetworkState.ONLINE) {
             try {
                 return repository.getAllPlacesFromApi(lat, lng).map { it.toDatabase().toDomain() }
@@ -33,6 +34,10 @@ class GetPlacesAroundUseCase @Inject constructor(
     }
 
     private companion object {
-        const val OFFLINE_MESSAGE = "Modo offline: conéctate a internet para mostrar los puntos más recientes de esta ciudad"
+        val OFFLINE_MESSAGE = StatusMessage(
+            title = "Modo offline",
+            description = "Conéctate a internet para mostrar los puntos más recientes de esta ciudad.",
+            isOffline = true
+        )
     }
 }
