@@ -261,7 +261,7 @@ fun MapScreen(viewModel: PlacesViewModel, modifier: Modifier = Modifier) {
         if (isLoadingArea) {
             MapStatusPill("Cargando puntos de esta zona…", showSpinner = true, modifier = pillModifier)
         } else if (showNoAreaPlaces) {
-            MapStatusPill("No hay puntos disponibles en esta zona", modifier = pillModifier)
+            MapStatusPill("No hay puntos disponibles en esta zona", iconRes = R.drawable.ic_warning, modifier = pillModifier)
         }
 
         SnackbarHost(
@@ -285,17 +285,32 @@ fun MapScreen(viewModel: PlacesViewModel, modifier: Modifier = Modifier) {
     }
 }
 @Composable
-private fun MapStatusPill(text: String, modifier: Modifier = Modifier, showSpinner: Boolean = false) {
-    Surface(modifier = modifier, shape = RoundedCornerShape(50), shadowElevation = 4.dp) {
+private fun MapStatusPill(
+    text: String,
+    modifier: Modifier = Modifier,
+    showSpinner: Boolean = false,
+    iconRes: Int? = null
+) {
+    // Sizes are the original pill (16/8 dp padding, 16 dp spinner, bodySmall 12 sp) scaled x1.2
+    Surface(modifier = modifier, shape = RoundedCornerShape(50), shadowElevation = 5.dp) {
         Row(
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+            modifier = Modifier.padding(horizontal = 19.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             if (showSpinner) {
-                CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
+                CircularProgressIndicator(modifier = Modifier.size(19.dp), strokeWidth = 2.4.dp)
             }
-            Text(text, style = MaterialTheme.typography.bodySmall)
+            if (iconRes != null) {
+                // Decorative: the text already says it, so screen readers skip the icon
+                Icon(
+                    painter = painterResource(id = iconRes),
+                    contentDescription = null,
+                    tint = Color(0xFFF9A825),
+                    modifier = Modifier.size(19.dp)
+                )
+            }
+            Text(text, style = MaterialTheme.typography.bodySmall.copy(fontSize = 14.sp, lineHeight = 19.sp))
         }
     }
 }
