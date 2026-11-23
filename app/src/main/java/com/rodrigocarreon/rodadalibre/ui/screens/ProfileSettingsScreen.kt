@@ -188,7 +188,7 @@ private fun ProfileSettingsContent(
                     color = MaterialTheme.colorScheme.primary
                 )
                 is ProfileUpdateState.Error -> ProfileUpdateMessage(
-                    text = "No se pudieron guardar los cambios. Inténtalo de nuevo.",
+                    text = "No se pudieron guardar los cambios. IntÃ©ntalo de nuevo.",
                     color = MaterialTheme.colorScheme.error
                 )
                 else -> Unit
