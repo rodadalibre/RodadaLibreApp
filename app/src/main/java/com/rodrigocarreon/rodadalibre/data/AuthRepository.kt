@@ -1,6 +1,8 @@
 package com.rodrigocarreon.rodadalibre.data
 
 import com.rodrigocarreon.rodadalibre.data.local.TokenDataStore
+import com.rodrigocarreon.rodadalibre.data.model.ChangePasswordRequest
+import com.rodrigocarreon.rodadalibre.data.model.ChangePasswordResult
 import com.rodrigocarreon.rodadalibre.data.model.LoginRequest
 import com.rodrigocarreon.rodadalibre.data.model.RegisterRequest
 import com.rodrigocarreon.rodadalibre.data.model.UpdateProfileRequest
@@ -69,6 +71,21 @@ class AuthRepository @Inject constructor(
             return null
         } catch (e: Exception){
             return null
+        }
+    }
+
+    suspend fun changePassword(currentPassword: String, password: String, passwordConfirmation: String): ChangePasswordResult{
+        try{
+            val response = api.changePassword(ChangePasswordRequest(currentPassword, password, passwordConfirmation))
+            return when {
+                response.isSuccessful -> ChangePasswordResult.SUCCESS
+                // The app validates the new password, so a 422 here means the current one is wrong
+                response.code() == 422 && response.errorBody()?.string()?.contains("current_password") == true ->
+                    ChangePasswordResult.WRONG_CURRENT_PASSWORD
+                else -> ChangePasswordResult.ERROR
+            }
+        } catch (e: Exception){
+            return ChangePasswordResult.ERROR
         }
     }
 

@@ -2,6 +2,7 @@ package com.rodrigocarreon.rodadalibre.data.network
 
 import com.rodrigocarreon.rodadalibre.data.model.LoginRequest
 import com.rodrigocarreon.rodadalibre.data.model.AuthResponse
+import com.rodrigocarreon.rodadalibre.data.model.ChangePasswordRequest
 import com.rodrigocarreon.rodadalibre.data.model.RegisterRequest
 import com.rodrigocarreon.rodadalibre.data.model.UpdateProfileRequest
 import com.rodrigocarreon.rodadalibre.data.model.User
@@ -25,6 +26,9 @@ interface AuthApiClient {
 
     @PUT("v1/auth/me")
     suspend fun updateProfile(@Body request: UpdateProfileRequest): Response<User>
+
+    @PUT("v1/auth/me/password")
+    suspend fun changePassword(@Body request: ChangePasswordRequest): Response<Unit>
 
     @POST("v1/auth/refresh")
     suspend fun refreshToken(): Response<AuthResponse>

@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.rodrigocarreon.rodadalibre.data.AuthRepository
 import com.rodrigocarreon.rodadalibre.data.local.TokenDataStore
 import com.rodrigocarreon.rodadalibre.data.model.User
+import com.rodrigocarreon.rodadalibre.data.model.ChangePasswordResult
+import com.rodrigocarreon.rodadalibre.domain.ChangePasswordUseCase
 import com.rodrigocarreon.rodadalibre.domain.CheckSessionUseCase
 import com.rodrigocarreon.rodadalibre.domain.LogoutUseCase
 import com.rodrigocarreon.rodadalibre.domain.RefreshTokenUseCase
@@ -29,11 +31,20 @@ sealed class ProfileUpdateState {
     object Error : ProfileUpdateState()
 }
 
+sealed class ChangePasswordState {
+    object Idle : ChangePasswordState()
+    object Saving : ChangePasswordState()
+    object Saved : ChangePasswordState()
+    object WrongCurrentPassword : ChangePasswordState()
+    object Error : ChangePasswordState()
+}
+
 @HiltViewModel
 class ProfileViewModel @Inject constructor(
     private val logoutUseCase: LogoutUseCase,
     private val checkSessionUseCase: CheckSessionUseCase,
-    private val updateProfileUseCase: UpdateProfileUseCase
+    private val updateProfileUseCase: UpdateProfileUseCase,
+    private val changePasswordUseCase: ChangePasswordUseCase
 ) : ViewModel() {
 
     private val _authState = MutableStateFlow<AuthState>(AuthState.Loading)
@@ -41,6 +52,9 @@ class ProfileViewModel @Inject constructor(
 
     private val _updateState = MutableStateFlow<ProfileUpdateState>(ProfileUpdateState.Idle)
     val updateState: StateFlow<ProfileUpdateState> = _updateState.asStateFlow()
+
+    private val _passwordState = MutableStateFlow<ChangePasswordState>(ChangePasswordState.Idle)
+    val passwordState: StateFlow<ChangePasswordState> = _passwordState.asStateFlow()
 
     fun checkSession() {
         viewModelScope.launch {
@@ -69,6 +83,22 @@ class ProfileViewModel @Inject constructor(
 
     fun clearUpdateState() {
         _updateState.value = ProfileUpdateState.Idle
+    }
+
+    fun changePassword(currentPassword: String, password: String, passwordConfirmation: String) {
+        viewModelScope.launch {
+            _passwordState.value = ChangePasswordState.Saving
+
+            _passwordState.value = when (changePasswordUseCase(currentPassword, password, passwordConfirmation)) {
+                ChangePasswordResult.SUCCESS -> ChangePasswordState.Saved
+                ChangePasswordResult.WRONG_CURRENT_PASSWORD -> ChangePasswordState.WrongCurrentPassword
+                ChangePasswordResult.ERROR -> ChangePasswordState.Error
+            }
+        }
+    }
+
+    fun clearPasswordState() {
+        _passwordState.value = ChangePasswordState.Idle
     }
 
     fun logout() {
