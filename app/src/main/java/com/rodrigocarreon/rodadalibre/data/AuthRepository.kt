@@ -128,6 +128,10 @@ class AuthRepository @Inject constructor(
                     return true
                 }
             }
+            // The session can't be recovered; keep the token on network or server errors
+            if(response.code() == 401){
+                tokenDataStore.clearToken()
+            }
             return false
         }catch (e: Exception){
             return false
