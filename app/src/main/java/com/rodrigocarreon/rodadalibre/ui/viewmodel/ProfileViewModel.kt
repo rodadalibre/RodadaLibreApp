@@ -5,9 +5,10 @@ import androidx.lifecycle.viewModelScope
 import com.rodrigocarreon.rodadalibre.data.AuthRepository
 import com.rodrigocarreon.rodadalibre.data.local.TokenDataStore
 import com.rodrigocarreon.rodadalibre.data.model.User
-import com.rodrigocarreon.rodadalibre.data.model.ChangePasswordResult
+import com.rodrigocarreon.rodadalibre.data.model.PasswordActionResult
 import com.rodrigocarreon.rodadalibre.domain.ChangePasswordUseCase
 import com.rodrigocarreon.rodadalibre.domain.CheckSessionUseCase
+import com.rodrigocarreon.rodadalibre.domain.DeleteAccountUseCase
 import com.rodrigocarreon.rodadalibre.domain.LogoutUseCase
 import com.rodrigocarreon.rodadalibre.domain.RefreshTokenUseCase
 import com.rodrigocarreon.rodadalibre.domain.UpdateProfileUseCase
@@ -39,12 +40,20 @@ sealed class ChangePasswordState {
     object Error : ChangePasswordState()
 }
 
+sealed class DeleteAccountState {
+    object Idle : DeleteAccountState()
+    object Deleting : DeleteAccountState()
+    object WrongPassword : DeleteAccountState()
+    object Error : DeleteAccountState()
+}
+
 @HiltViewModel
 class ProfileViewModel @Inject constructor(
     private val logoutUseCase: LogoutUseCase,
     private val checkSessionUseCase: CheckSessionUseCase,
     private val updateProfileUseCase: UpdateProfileUseCase,
-    private val changePasswordUseCase: ChangePasswordUseCase
+    private val changePasswordUseCase: ChangePasswordUseCase,
+    private val deleteAccountUseCase: DeleteAccountUseCase
 ) : ViewModel() {
 
     private val _authState = MutableStateFlow<AuthState>(AuthState.Loading)
@@ -55,6 +64,9 @@ class ProfileViewModel @Inject constructor(
 
     private val _passwordState = MutableStateFlow<ChangePasswordState>(ChangePasswordState.Idle)
     val passwordState: StateFlow<ChangePasswordState> = _passwordState.asStateFlow()
+
+    private val _deleteState = MutableStateFlow<DeleteAccountState>(DeleteAccountState.Idle)
+    val deleteState: StateFlow<DeleteAccountState> = _deleteState.asStateFlow()
 
     fun checkSession() {
         viewModelScope.launch {
@@ -90,15 +102,34 @@ class ProfileViewModel @Inject constructor(
             _passwordState.value = ChangePasswordState.Saving
 
             _passwordState.value = when (changePasswordUseCase(currentPassword, password, passwordConfirmation)) {
-                ChangePasswordResult.SUCCESS -> ChangePasswordState.Saved
-                ChangePasswordResult.WRONG_CURRENT_PASSWORD -> ChangePasswordState.WrongCurrentPassword
-                ChangePasswordResult.ERROR -> ChangePasswordState.Error
+                PasswordActionResult.SUCCESS -> ChangePasswordState.Saved
+                PasswordActionResult.WRONG_CURRENT_PASSWORD -> ChangePasswordState.WrongCurrentPassword
+                PasswordActionResult.ERROR -> ChangePasswordState.Error
             }
         }
     }
 
     fun clearPasswordState() {
         _passwordState.value = ChangePasswordState.Idle
+    }
+
+    fun deleteAccount(currentPassword: String) {
+        viewModelScope.launch {
+            _deleteState.value = DeleteAccountState.Deleting
+
+            when (deleteAccountUseCase(currentPassword)) {
+                PasswordActionResult.SUCCESS -> {
+                    _deleteState.value = DeleteAccountState.Idle
+                    _authState.value = AuthState.Unauthenticated
+                }
+                PasswordActionResult.WRONG_CURRENT_PASSWORD -> _deleteState.value = DeleteAccountState.WrongPassword
+                PasswordActionResult.ERROR -> _deleteState.value = DeleteAccountState.Error
+            }
+        }
+    }
+
+    fun clearDeleteState() {
+        _deleteState.value = DeleteAccountState.Idle
     }
 
     fun logout() {

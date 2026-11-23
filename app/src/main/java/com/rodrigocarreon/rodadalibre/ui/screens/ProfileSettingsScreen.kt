@@ -24,6 +24,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -49,6 +50,7 @@ import com.rodrigocarreon.rodadalibre.R
 import com.rodrigocarreon.rodadalibre.data.model.User
 import com.rodrigocarreon.rodadalibre.ui.viewmodel.AuthState
 import com.rodrigocarreon.rodadalibre.ui.viewmodel.ChangePasswordState
+import com.rodrigocarreon.rodadalibre.ui.viewmodel.DeleteAccountState
 import com.rodrigocarreon.rodadalibre.ui.viewmodel.ProfileUpdateState
 import com.rodrigocarreon.rodadalibre.ui.viewmodel.ProfileViewModel
 
@@ -60,6 +62,7 @@ fun ProfileSettingsScreen(
     val authState by viewModel.authState.collectAsState()
     val updateState by viewModel.updateState.collectAsState()
     val passwordState by viewModel.passwordState.collectAsState()
+    val deleteState by viewModel.deleteState.collectAsState()
 
     LaunchedEffect(Unit) {
         viewModel.checkSession()
@@ -91,6 +94,9 @@ fun ProfileSettingsScreen(
                 passwordState = passwordState,
                 onChangePassword = viewModel::changePassword,
                 onClearPasswordState = viewModel::clearPasswordState,
+                deleteState = deleteState,
+                onDeleteAccount = viewModel::deleteAccount,
+                onClearDeleteState = viewModel::clearDeleteState,
                 onNavigateBack = onNavigateBack
             )
         }
@@ -106,8 +112,27 @@ private fun ProfileSettingsContent(
     passwordState: ChangePasswordState,
     onChangePassword: (String, String, String) -> Unit,
     onClearPasswordState: () -> Unit,
+    deleteState: DeleteAccountState,
+    onDeleteAccount: (String) -> Unit,
+    onClearDeleteState: () -> Unit,
     onNavigateBack: () -> Unit
 ) {
+    var showDeleteDialog by remember {
+        mutableStateOf(false)
+    }
+
+    if (showDeleteDialog) {
+        DeleteAccountDialog(
+            state = deleteState,
+            onConfirm = onDeleteAccount,
+            onEdit = onClearDeleteState,
+            onDismiss = {
+                showDeleteDialog = false
+                onClearDeleteState()
+            }
+        )
+    }
+
     var showPasswordDialog by remember {
         mutableStateOf(false)
     }
@@ -254,7 +279,8 @@ private fun ProfileSettingsContent(
             AccountOption(
                 title = "Eliminar mi cuenta",
                 onClick = {
-                    // TODO
+                    onClearDeleteState()
+                    showDeleteDialog = true
                 }
             )
 
@@ -348,6 +374,77 @@ private fun ChangePasswordDialog(
             TextButton(
                 onClick = onDismiss,
                 enabled = !isSaving
+            ) {
+                Text(text = "Cancelar")
+            }
+        }
+    )
+}
+
+@Composable
+private fun DeleteAccountDialog(
+    state: DeleteAccountState,
+    onConfirm: (String) -> Unit,
+    onEdit: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    var currentPassword by remember { mutableStateOf("") }
+
+    val isDeleting = state is DeleteAccountState.Deleting
+
+    AlertDialog(
+        onDismissRequest = { if (!isDeleting) onDismiss() },
+        title = { Text(text = "Eliminar mi cuenta") },
+        text = {
+            Column {
+                Text(
+                    text = "Tu cuenta y tus solicitudes de cambio se eliminarán para siempre. " +
+                        "Esta acción no se puede deshacer.",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                PasswordField(
+                    label = "Contraseña actual",
+                    value = currentPassword,
+                    onValueChange = {
+                        currentPassword = it
+                        onEdit()
+                    }
+                )
+                val error = when (state) {
+                    is DeleteAccountState.WrongPassword -> "La contraseña es incorrecta"
+                    is DeleteAccountState.Error -> "No se pudo eliminar la cuenta. Inténtalo de nuevo."
+                    else -> null
+                }
+                if (error != null) {
+                    ProfileUpdateMessage(
+                        text = error,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = { onConfirm(currentPassword) },
+                enabled = currentPassword.isNotEmpty() && !isDeleting,
+                colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
+            ) {
+                if (isDeleting) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(18.dp),
+                        strokeWidth = 2.dp,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                } else {
+                    Text(text = "Eliminar")
+                }
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = onDismiss,
+                enabled = !isDeleting
             ) {
                 Text(text = "Cancelar")
             }

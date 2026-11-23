@@ -7,5 +7,3 @@ data class ChangePasswordRequest(
     @SerializedName("password") val password: String,
     @SerializedName("password_confirmation") val passwordConfirmation: String
 )
-
-enum class ChangePasswordResult { SUCCESS, WRONG_CURRENT_PASSWORD, ERROR }

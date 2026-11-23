@@ -2,12 +2,14 @@ package com.rodrigocarreon.rodadalibre.data
 
 import com.rodrigocarreon.rodadalibre.data.local.TokenDataStore
 import com.rodrigocarreon.rodadalibre.data.model.ChangePasswordRequest
-import com.rodrigocarreon.rodadalibre.data.model.ChangePasswordResult
+import com.rodrigocarreon.rodadalibre.data.model.DeleteAccountRequest
+import com.rodrigocarreon.rodadalibre.data.model.PasswordActionResult
 import com.rodrigocarreon.rodadalibre.data.model.LoginRequest
 import com.rodrigocarreon.rodadalibre.data.model.RegisterRequest
 import com.rodrigocarreon.rodadalibre.data.model.UpdateProfileRequest
 import com.rodrigocarreon.rodadalibre.data.model.User
 import com.rodrigocarreon.rodadalibre.data.network.AuthApiClient
+import retrofit2.Response
 import javax.inject.Inject
 
 class AuthRepository @Inject constructor(
@@ -74,19 +76,32 @@ class AuthRepository @Inject constructor(
         }
     }
 
-    suspend fun changePassword(currentPassword: String, password: String, passwordConfirmation: String): ChangePasswordResult{
+    suspend fun changePassword(currentPassword: String, password: String, passwordConfirmation: String): PasswordActionResult{
         try{
-            val response = api.changePassword(ChangePasswordRequest(currentPassword, password, passwordConfirmation))
-            return when {
-                response.isSuccessful -> ChangePasswordResult.SUCCESS
-                // The app validates the new password, so a 422 here means the current one is wrong
-                response.code() == 422 && response.errorBody()?.string()?.contains("current_password") == true ->
-                    ChangePasswordResult.WRONG_CURRENT_PASSWORD
-                else -> ChangePasswordResult.ERROR
-            }
+            return passwordActionResult(api.changePassword(ChangePasswordRequest(currentPassword, password, passwordConfirmation)))
         } catch (e: Exception){
-            return ChangePasswordResult.ERROR
+            return PasswordActionResult.ERROR
         }
+    }
+
+    suspend fun deleteAccount(currentPassword: String): PasswordActionResult{
+        try{
+            val result = passwordActionResult(api.deleteAccount(DeleteAccountRequest(currentPassword)))
+            if(result == PasswordActionResult.SUCCESS){
+                tokenDataStore.clearToken()
+            }
+            return result
+        } catch (e: Exception){
+            return PasswordActionResult.ERROR
+        }
+    }
+
+    private fun passwordActionResult(response: Response<Unit>): PasswordActionResult = when {
+        response.isSuccessful -> PasswordActionResult.SUCCESS
+        // The app validates the other fields, so a 422 on current_password means it is wrong
+        response.code() == 422 && response.errorBody()?.string()?.contains("current_password") == true ->
+            PasswordActionResult.WRONG_CURRENT_PASSWORD
+        else -> PasswordActionResult.ERROR
     }
 
     suspend fun logout(): Boolean{
