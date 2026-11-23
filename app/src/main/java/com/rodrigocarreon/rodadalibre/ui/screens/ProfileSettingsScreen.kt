@@ -10,7 +10,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
@@ -20,6 +23,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -29,13 +34,24 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.rodrigocarreon.rodadalibre.R
 import com.rodrigocarreon.rodadalibre.data.model.User
 import com.rodrigocarreon.rodadalibre.ui.viewmodel.AuthState
+import com.rodrigocarreon.rodadalibre.ui.viewmodel.ChangePasswordState
+import com.rodrigocarreon.rodadalibre.ui.viewmodel.DeleteAccountState
+import com.rodrigocarreon.rodadalibre.ui.viewmodel.ProfileUpdateState
 import com.rodrigocarreon.rodadalibre.ui.viewmodel.ProfileViewModel
 
 @Composable
@@ -44,6 +60,9 @@ fun ProfileSettingsScreen(
     viewModel: ProfileViewModel = hiltViewModel()
 ) {
     val authState by viewModel.authState.collectAsState()
+    val updateState by viewModel.updateState.collectAsState()
+    val passwordState by viewModel.passwordState.collectAsState()
+    val deleteState by viewModel.deleteState.collectAsState()
 
     LaunchedEffect(Unit) {
         viewModel.checkSession()
@@ -69,6 +88,15 @@ fun ProfileSettingsScreen(
         is AuthState.Authenticated -> {
             ProfileSettingsContent(
                 user = state.user,
+                updateState = updateState,
+                onSaveProfile = viewModel::updateProfile,
+                onEditProfile = viewModel::clearUpdateState,
+                passwordState = passwordState,
+                onChangePassword = viewModel::changePassword,
+                onClearPasswordState = viewModel::clearPasswordState,
+                deleteState = deleteState,
+                onDeleteAccount = viewModel::deleteAccount,
+                onClearDeleteState = viewModel::clearDeleteState,
                 onNavigateBack = onNavigateBack
             )
         }
@@ -78,8 +106,54 @@ fun ProfileSettingsScreen(
 @Composable
 private fun ProfileSettingsContent(
     user: User,
+    updateState: ProfileUpdateState,
+    onSaveProfile: (String, String) -> Unit,
+    onEditProfile: () -> Unit,
+    passwordState: ChangePasswordState,
+    onChangePassword: (String, String, String) -> Unit,
+    onClearPasswordState: () -> Unit,
+    deleteState: DeleteAccountState,
+    onDeleteAccount: (String) -> Unit,
+    onClearDeleteState: () -> Unit,
     onNavigateBack: () -> Unit
 ) {
+    var showDeleteDialog by remember {
+        mutableStateOf(false)
+    }
+
+    if (showDeleteDialog) {
+        DeleteAccountDialog(
+            state = deleteState,
+            onConfirm = onDeleteAccount,
+            onEdit = onClearDeleteState,
+            onDismiss = {
+                showDeleteDialog = false
+                onClearDeleteState()
+            }
+        )
+    }
+
+    var showPasswordDialog by remember {
+        mutableStateOf(false)
+    }
+
+    // Close the dialog once the password is saved; the success message stays on the screen
+    LaunchedEffect(passwordState) {
+        if (passwordState is ChangePasswordState.Saved) showPasswordDialog = false
+    }
+
+    if (showPasswordDialog) {
+        ChangePasswordDialog(
+            state = passwordState,
+            onConfirm = onChangePassword,
+            onEdit = onClearPasswordState,
+            onDismiss = {
+                showPasswordDialog = false
+                onClearPasswordState()
+            }
+        )
+    }
+
     var firstName by remember {
         mutableStateOf(user.first_name)
     }
@@ -129,6 +203,7 @@ private fun ProfileSettingsContent(
                 value = firstName,
                 onValueChange = {
                     firstName = it
+                    onEditProfile()
                 }
             )
             Spacer(modifier = Modifier.height(22.dp))
@@ -137,23 +212,45 @@ private fun ProfileSettingsContent(
                 value = lastName,
                 onValueChange = {
                     lastName = it
+                    onEditProfile()
                 }
             )
             Spacer(modifier = Modifier.height(22.dp))
+            val isSaving = updateState is ProfileUpdateState.Saving
+            val hasChanges = firstName.trim() != user.first_name || lastName.trim() != user.last_name
             Button(
                 onClick = {
-                    // TODO: viewModel.updateProfile(...)
+                    onSaveProfile(firstName, lastName)
                 },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(52.dp),
                 shape = RoundedCornerShape(12.dp),
-                enabled = firstName.isNotBlank()
+                // The backend requires both names
+                enabled = firstName.isNotBlank() && lastName.isNotBlank() && hasChanges && !isSaving
             ) {
-                Text(
-                    text = "Guardar cambios",
-                    fontWeight = FontWeight.Bold
+                if (isSaving) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(22.dp),
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Text(
+                        text = "Guardar cambios",
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+            when (updateState) {
+                is ProfileUpdateState.Saved -> ProfileUpdateMessage(
+                    text = "Cambios guardados",
+                    color = MaterialTheme.colorScheme.primary
                 )
+                is ProfileUpdateState.Error -> ProfileUpdateMessage(
+                    text = "No se pudieron guardar los cambios. Inténtalo de nuevo.",
+                    color = MaterialTheme.colorScheme.error
+                )
+                else -> Unit
             }
             Spacer(modifier = Modifier.weight(1f))
 
@@ -169,19 +266,233 @@ private fun ProfileSettingsContent(
             AccountOption(
                 title = "Cambiar contraseña",
                 onClick = {
-                    // TODO
+                    onClearPasswordState()
+                    showPasswordDialog = true
                 }
             )
+            if (passwordState is ChangePasswordState.Saved) {
+                ProfileUpdateMessage(
+                    text = "Contraseña actualizada",
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
             AccountOption(
                 title = "Eliminar mi cuenta",
                 onClick = {
-                    // TODO
+                    onClearDeleteState()
+                    showDeleteDialog = true
                 }
             )
 
             Spacer(modifier = Modifier.height(10.dp))
         }
     }
+}
+
+@Composable
+private fun ChangePasswordDialog(
+    state: ChangePasswordState,
+    onConfirm: (String, String, String) -> Unit,
+    onEdit: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    var currentPassword by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var passwordConfirmation by remember { mutableStateOf("") }
+
+    val isSaving = state is ChangePasswordState.Saving
+    // Same rules as the backend: min 6, confirmed, different from the current one
+    val validationError = when {
+        password.isNotEmpty() && password.length < 6 -> "Debe tener al menos 6 caracteres"
+        passwordConfirmation.isNotEmpty() && password != passwordConfirmation -> "Las contraseñas no coinciden"
+        password.isNotEmpty() && password == currentPassword -> "Debe ser distinta a la actual"
+        else -> null
+    }
+    val canSave = currentPassword.isNotEmpty() && password.isNotEmpty() &&
+        passwordConfirmation.isNotEmpty() && validationError == null && !isSaving
+
+    AlertDialog(
+        onDismissRequest = { if (!isSaving) onDismiss() },
+        title = { Text(text = "Cambiar contraseña") },
+        text = {
+            Column {
+                PasswordField(
+                    label = "Contraseña actual",
+                    value = currentPassword,
+                    onValueChange = {
+                        currentPassword = it
+                        onEdit()
+                    }
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                PasswordField(
+                    label = "Nueva contraseña",
+                    value = password,
+                    onValueChange = {
+                        password = it
+                        onEdit()
+                    }
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                PasswordField(
+                    label = "Confirmar nueva contraseña",
+                    value = passwordConfirmation,
+                    onValueChange = {
+                        passwordConfirmation = it
+                        onEdit()
+                    }
+                )
+                val error = validationError ?: when (state) {
+                    is ChangePasswordState.WrongCurrentPassword -> "La contraseña actual es incorrecta"
+                    is ChangePasswordState.Error -> "No se pudo cambiar la contraseña. Inténtalo de nuevo."
+                    else -> null
+                }
+                if (error != null) {
+                    ProfileUpdateMessage(
+                        text = error,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = { onConfirm(currentPassword, password, passwordConfirmation) },
+                enabled = canSave
+            ) {
+                if (isSaving) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(18.dp),
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Text(text = "Guardar")
+                }
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = onDismiss,
+                enabled = !isSaving
+            ) {
+                Text(text = "Cancelar")
+            }
+        }
+    )
+}
+
+@Composable
+private fun DeleteAccountDialog(
+    state: DeleteAccountState,
+    onConfirm: (String) -> Unit,
+    onEdit: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    var currentPassword by remember { mutableStateOf("") }
+
+    val isDeleting = state is DeleteAccountState.Deleting
+
+    AlertDialog(
+        onDismissRequest = { if (!isDeleting) onDismiss() },
+        title = { Text(text = "Eliminar mi cuenta") },
+        text = {
+            Column {
+                Text(
+                    text = "Tu cuenta y tus solicitudes de cambio se eliminarán para siempre. " +
+                        "Esta acción no se puede deshacer.",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                PasswordField(
+                    label = "Contraseña actual",
+                    value = currentPassword,
+                    onValueChange = {
+                        currentPassword = it
+                        onEdit()
+                    }
+                )
+                val error = when (state) {
+                    is DeleteAccountState.WrongPassword -> "La contraseña es incorrecta"
+                    is DeleteAccountState.Error -> "No se pudo eliminar la cuenta. Inténtalo de nuevo."
+                    else -> null
+                }
+                if (error != null) {
+                    ProfileUpdateMessage(
+                        text = error,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = { onConfirm(currentPassword) },
+                enabled = currentPassword.isNotEmpty() && !isDeleting,
+                colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
+            ) {
+                if (isDeleting) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(18.dp),
+                        strokeWidth = 2.dp,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                } else {
+                    Text(text = "Eliminar")
+                }
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = onDismiss,
+                enabled = !isDeleting
+            ) {
+                Text(text = "Cancelar")
+            }
+        }
+    )
+}
+
+@Composable
+private fun PasswordField(
+    label: String,
+    value: String,
+    onValueChange: (String) -> Unit
+) {
+    var isVisible by remember { mutableStateOf(false) }
+
+    OutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
+        modifier = Modifier.fillMaxWidth(),
+        label = { Text(text = label) },
+        singleLine = true,
+        visualTransformation = if (isVisible) VisualTransformation.None else PasswordVisualTransformation(),
+        trailingIcon = {
+            IconButton(onClick = { isVisible = !isVisible }) {
+                Icon(
+                    painter = painterResource(
+                        id = if (isVisible) R.drawable.ic_visibility_off else R.drawable.ic_visibility
+                    ),
+                    contentDescription = if (isVisible) "Ocultar contraseña" else "Mostrar contraseña"
+                )
+            }
+        },
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+        shape = RoundedCornerShape(12.dp)
+    )
+}
+
+@Composable
+private fun ProfileUpdateMessage(text: String, color: Color) {
+    Text(
+        text = text,
+        color = color,
+        style = MaterialTheme.typography.bodyMedium,
+        modifier = Modifier
+            .padding(top = 10.dp)
+            // Announce the result to TalkBack
+            .semantics { liveRegion = LiveRegionMode.Polite }
+    )
 }
 
 @Composable
@@ -203,6 +514,7 @@ private fun ProfileTextField(
         },
         textStyle = MaterialTheme.typography.bodyLarge,
         singleLine = true,
+        keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words),
         shape = RoundedCornerShape(18.dp),
         colors = OutlinedTextFieldDefaults.colors(
             disabledTextColor = MaterialTheme.colorScheme.onSurface,
