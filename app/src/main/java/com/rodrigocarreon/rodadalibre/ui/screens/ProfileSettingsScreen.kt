@@ -10,7 +10,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
@@ -29,13 +31,19 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.rodrigocarreon.rodadalibre.R
 import com.rodrigocarreon.rodadalibre.data.model.User
 import com.rodrigocarreon.rodadalibre.ui.viewmodel.AuthState
+import com.rodrigocarreon.rodadalibre.ui.viewmodel.ProfileUpdateState
 import com.rodrigocarreon.rodadalibre.ui.viewmodel.ProfileViewModel
 
 @Composable
@@ -44,6 +52,7 @@ fun ProfileSettingsScreen(
     viewModel: ProfileViewModel = hiltViewModel()
 ) {
     val authState by viewModel.authState.collectAsState()
+    val updateState by viewModel.updateState.collectAsState()
 
     LaunchedEffect(Unit) {
         viewModel.checkSession()
@@ -69,6 +78,9 @@ fun ProfileSettingsScreen(
         is AuthState.Authenticated -> {
             ProfileSettingsContent(
                 user = state.user,
+                updateState = updateState,
+                onSaveProfile = viewModel::updateProfile,
+                onEditProfile = viewModel::clearUpdateState,
                 onNavigateBack = onNavigateBack
             )
         }
@@ -78,6 +90,9 @@ fun ProfileSettingsScreen(
 @Composable
 private fun ProfileSettingsContent(
     user: User,
+    updateState: ProfileUpdateState,
+    onSaveProfile: (String, String) -> Unit,
+    onEditProfile: () -> Unit,
     onNavigateBack: () -> Unit
 ) {
     var firstName by remember {
@@ -129,6 +144,7 @@ private fun ProfileSettingsContent(
                 value = firstName,
                 onValueChange = {
                     firstName = it
+                    onEditProfile()
                 }
             )
             Spacer(modifier = Modifier.height(22.dp))
@@ -137,23 +153,45 @@ private fun ProfileSettingsContent(
                 value = lastName,
                 onValueChange = {
                     lastName = it
+                    onEditProfile()
                 }
             )
             Spacer(modifier = Modifier.height(22.dp))
+            val isSaving = updateState is ProfileUpdateState.Saving
+            val hasChanges = firstName.trim() != user.first_name || lastName.trim() != user.last_name
             Button(
                 onClick = {
-                    // TODO: viewModel.updateProfile(...)
+                    onSaveProfile(firstName, lastName)
                 },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(52.dp),
                 shape = RoundedCornerShape(12.dp),
-                enabled = firstName.isNotBlank()
+                // The backend requires both names
+                enabled = firstName.isNotBlank() && lastName.isNotBlank() && hasChanges && !isSaving
             ) {
-                Text(
-                    text = "Guardar cambios",
-                    fontWeight = FontWeight.Bold
+                if (isSaving) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(22.dp),
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Text(
+                        text = "Guardar cambios",
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+            when (updateState) {
+                is ProfileUpdateState.Saved -> ProfileUpdateMessage(
+                    text = "Cambios guardados",
+                    color = MaterialTheme.colorScheme.primary
                 )
+                is ProfileUpdateState.Error -> ProfileUpdateMessage(
+                    text = "No se pudieron guardar los cambios. Inténtalo de nuevo.",
+                    color = MaterialTheme.colorScheme.error
+                )
+                else -> Unit
             }
             Spacer(modifier = Modifier.weight(1f))
 
@@ -185,6 +223,19 @@ private fun ProfileSettingsContent(
 }
 
 @Composable
+private fun ProfileUpdateMessage(text: String, color: Color) {
+    Text(
+        text = text,
+        color = color,
+        style = MaterialTheme.typography.bodyMedium,
+        modifier = Modifier
+            .padding(top = 10.dp)
+            // Announce the result to TalkBack
+            .semantics { liveRegion = LiveRegionMode.Polite }
+    )
+}
+
+@Composable
 private fun ProfileTextField(
     label: String,
     value: String,
@@ -203,6 +254,7 @@ private fun ProfileTextField(
         },
         textStyle = MaterialTheme.typography.bodyLarge,
         singleLine = true,
+        keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words),
         shape = RoundedCornerShape(18.dp),
         colors = OutlinedTextFieldDefaults.colors(
             disabledTextColor = MaterialTheme.colorScheme.onSurface,

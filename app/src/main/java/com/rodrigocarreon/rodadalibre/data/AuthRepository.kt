@@ -3,6 +3,7 @@ package com.rodrigocarreon.rodadalibre.data
 import com.rodrigocarreon.rodadalibre.data.local.TokenDataStore
 import com.rodrigocarreon.rodadalibre.data.model.LoginRequest
 import com.rodrigocarreon.rodadalibre.data.model.RegisterRequest
+import com.rodrigocarreon.rodadalibre.data.model.UpdateProfileRequest
 import com.rodrigocarreon.rodadalibre.data.model.User
 import com.rodrigocarreon.rodadalibre.data.network.AuthApiClient
 import javax.inject.Inject
@@ -48,6 +49,19 @@ class AuthRepository @Inject constructor(
     suspend fun getUserProfile(): User?{
         try{
             val response = api.getUserProfile()
+            if(response.isSuccessful){
+                return response.body()
+            }
+
+            return null
+        } catch (e: Exception){
+            return null
+        }
+    }
+
+    suspend fun updateProfile(firstName: String, lastName: String): User?{
+        try{
+            val response = api.updateProfile(UpdateProfileRequest(firstName, lastName))
             if(response.isSuccessful){
                 return response.body()
             }
